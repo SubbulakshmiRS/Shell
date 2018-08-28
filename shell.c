@@ -148,7 +148,7 @@ int main()
         prompt();
         line = get_line();
         tokens = get_tokens(line);
-        printf("%s\n",line);
+        printf("%d\n",tokens_len);
 
         if (strcmp(tokens[0],"cd") == 0)
         {
@@ -179,28 +179,16 @@ int main()
 
         else if (strcmp(tokens[0],"echo") == 0)
         {
-            printf("line %s\n",line);
-            char p_str[sizeof(line)];
-            int i,n = bufsize,j=0;
+            char * p_str = malloc(bufsize*sizeof(char));
 
-            for(i =0;i<n;i++)
-                if (line[i] == 'e')
-                    break;
-            printf("%d\n",i);
-            for(i=i+4;i<n;i++)
-                if (line[i] != " ")
-                    break;
-            i++;
-            j=0;
-            printf("%d\n",i);
-            while(i<n)
-            {   
-                p_str[j] = line[i];
-                i++;
-                j++;
+            strcpy(p_str,"");
+            for (int i=1;i<tokens_len;i++)
+            {
+                strcat(p_str,tokens[i]);
+                strcat(p_str," ");
             }
-            p_str[j] = '\0';
             printf("%s\n",p_str);
+            free(p_str);
         }           
     }
 
