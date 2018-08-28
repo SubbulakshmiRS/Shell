@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #define MAX_LENGTH 1024
 #define NUM 50
 #define DELIM " \t\r\n\a"
 
-int tokens_len,bufsize;
+int tokens_len,bufsize,listsize;
 char cwd[MAX_LENGTH],hostname[MAX_LENGTH];
 char * user ;
 char home[MAX_LENGTH];
@@ -134,10 +135,43 @@ void find_how_back()
     return ;
 }
 
+char ** list_all()
+{
+    struct dirent *de;  // Pointer for directory entry
+    char ** list = malloc(MAX_LENGTH*sizeof(char *));
+    listsize = MAX_LENGTH;
+
+    // opendir() returns a pointer of DIR type. 
+    DIR *dr = opendir(".");
+    if (dr == NULL)  // opendir returns NULL if couldn't open directory
+    {
+        printf("Could not open current directory" );
+        return 0;
+    }
+
+    int pos = 0;
+    while ((de = readdir(dr)) != NULL)
+    {
+        if (pos >= listsize)
+        {
+            listsize += MAX_LENGTH;
+            list = realloc(list,listsize*sizeof(char *));
+        } 
+        list[pos] = de->d_name;
+        pos++;
+
+    }
+
+    closedir(dr); 
+    listsize = pos;   
+    return list ;
+}
+
 int main() 
 {
     char * line ;
     char ** tokens;
+    char ** list;
     hostname[MAX_LENGTH-1] = '\0';
     gethostname(hostname, MAX_LENGTH-1);
     user = getenv("USER");
@@ -189,7 +223,29 @@ int main()
             }
             printf("%s\n",p_str);
             free(p_str);
-        }           
+        }  
+
+        else if(strcmp(tokens[0],"ls") == 0)
+        { 
+            list = list_all();
+            if (tokens_len == 1)
+            {
+                for(int i = 0;i<listsize;i++)
+                    if (list[i][0] != '.')
+                        printf("%s  ",list[i]);
+                printf("\n"); 
+            } 
+            else if (tokens_len == 2)
+            {   
+                if(strcmp(tokens[1],"-a") == 0)
+                    for(int i = 0;i<listsize;i++)
+                        printf("%s  ",list[i]);
+                    printf("\n");                     
+                
+            }           
+        }
+
+
     }
 
     free(user);
@@ -197,5 +253,8 @@ int main()
     for(int i =0;i<tokens_len;i++)
         free(tokens[i]);
     free(tokens);
+    for(int i =0;i<listsize;i++)
+        free(list[i]);
+    free(list);
     return 0;
 }
