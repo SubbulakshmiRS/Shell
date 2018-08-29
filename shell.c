@@ -119,11 +119,8 @@ void check_background()
     pid = -1;
     background = 0;
     for(int i=0;i<tokens_len;i++)
-        if (strcmp(tokens[i],"&") == 0)
-        {   
+        if (strcmp(tokens[i],"&") == 0)   
             background = 1;
-            return ;
-        }
     pid = fork();
 }
 
@@ -227,7 +224,7 @@ int main()
             else 
                 execvp(tokens[0],tokens);
         }
-        else if (pid != -1)
+        else if (background == 0 && pid != -1)
             wait(NULL);//background stops
 
     }
