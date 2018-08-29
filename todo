@@ -1,0 +1,14 @@
+echo multiline and not the quotes , environment variables 
+vim,emacs
+change grp for foreground , background
+/proc status folder - pinfo
+background when done,should be printed out with the next prompt
+/rtc date and time  
+ls - block size 
+
+done :
+cd .. 
+cd 
+
+look into:
+getopt

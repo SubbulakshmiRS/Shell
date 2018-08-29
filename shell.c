@@ -3,92 +3,26 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include "stat_ls.c"
+#include "args.c"
 
 #define MAX_LENGTH 1024
 #define NUM 50
 #define DELIM " \t\r\n\a"
 
-int tokens_len,bufsize,listsize;
+char * line ;
+char ** tokens;
+char ** list;
+int listsize;
 char cwd[MAX_LENGTH],hostname[MAX_LENGTH];
 char * user ;
 char home[MAX_LENGTH];
 char cur_rel[MAX_LENGTH];
 //char * cur_rel;
-
-
-char * get_line()
-{
-    char * buffer = malloc(sizeof(char)*MAX_LENGTH);
-    int c,position =0;
-    bufsize = MAX_LENGTH;
-
-    if (!buffer)
-    {
-        printf("Allocation error\n");
-        exit(1);
-    }
-
-    while (1) 
-    {
-        // Read a character
-        c = getchar();
-
-        // If we hit EOF, replace it with a null character and return.
-        if (c == EOF || c == '\n')
-        {
-            buffer[position] = '\0';
-            return buffer;
-        } 
-        else 
-            buffer[position] = c;
-        position++;
-
-        // If we have exceeded the buffer, reallocate.
-        if (position >= bufsize) 
-        {
-            bufsize += MAX_LENGTH;
-            buffer = realloc(buffer, bufsize);
-            if (!buffer) 
-            {
-                printf("Reallocation error\n");
-                exit(1);
-            }
-        }
-    }
-}
-
-
-char ** get_tokens(char * input)
-{
-    char ** tokens = malloc(sizeof(char *)*NUM);
-    char * t;
-    int position  =0;
-    int bufsize = NUM;
-    tokens[0] = strtok(input,DELIM);
-    position ++;
-    t = strtok(NULL,DELIM);
-
-    while(t)
-    {
-        tokens[position] = t;
-        position ++;
-        if (position >= bufsize )
-        {
-            bufsize += NUM ;
-            tokens = realloc(tokens, bufsize * sizeof(char*));
-            if (!tokens)
-            {
-                printf("tokens not reallocated properly\n");
-                exit(1);
-            }
-        }
-        t = strtok(NULL,DELIM);
-    }
-    tokens[position] = NULL;
-    tokens_len = position ;
-    return tokens;
-}
-
 
 void prompt()
 {
@@ -135,14 +69,14 @@ void find_how_back()
     return ;
 }
 
-char ** list_all()
+char ** list_all(char * cur)
 {
     struct dirent *de;  // Pointer for directory entry
     char ** list = malloc(MAX_LENGTH*sizeof(char *));
     listsize = MAX_LENGTH;
 
     // opendir() returns a pointer of DIR type. 
-    DIR *dr = opendir(".");
+    DIR *dr = opendir(cur);
     if (dr == NULL)  // opendir returns NULL if couldn't open directory
     {
         printf("Could not open current directory" );
@@ -167,11 +101,29 @@ char ** list_all()
     return list ;
 }
 
+void list_out_ls(char * cur)
+{
+    list = list_all(cur);
+    for(int i = 0;i<listsize;i++)
+        if (list[i][0] != '.')
+            printf("%s  ",list[i]);
+    printf("\n"); 
+    return ; 
+}
+
+void getFileCreationTime(char * path) {
+    struct stat attr;
+    char * alt = malloc(MAX_LENGTH*sizeof(char));
+    strcpy(alt,path);
+    stat(alt, &attr);
+    char date[10];
+    char * time = ctime(&attr.st_mtime);
+    printf("%s %s\n",path, time);
+    free(alt);
+}
+
 int main() 
 {
-    char * line ;
-    char ** tokens;
-    char ** list;
     hostname[MAX_LENGTH-1] = '\0';
     gethostname(hostname, MAX_LENGTH-1);
     user = getenv("USER");
@@ -227,22 +179,41 @@ int main()
 
         else if(strcmp(tokens[0],"ls") == 0)
         { 
-            list = list_all();
-            if (tokens_len == 1)
+            if (tokens[1] == NULL)
+                list_out_ls("."); 
+            else if (strcmp(tokens[1],"-l") == 0)
             {
+                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+                list = list_all(cur);
                 for(int i = 0;i<listsize;i++)
                     if (list[i][0] != '.')
-                        printf("%s  ",list[i]);
-                printf("\n"); 
-            } 
-            else if (tokens_len == 2)
-            {   
-                if(strcmp(tokens[1],"-a") == 0)
-                    for(int i = 0;i<listsize;i++)
-                        printf("%s  ",list[i]);
-                    printf("\n");                     
-                
-            }           
+                    {
+                        stat_file(list[i]);
+                    } 
+            }
+            else if (strcmp(tokens[1],"-a") == 0)
+            {
+                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+                list = list_all(cur);
+                for(int i = 0;i<listsize;i++)
+                    printf("%s  ",list[i]);
+                printf("\n");
+            }
+            else if (strcmp(tokens[1],"-al") == 0 || strcmp(tokens[1],"-la") == 0)
+            {
+                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+                list = list_all(cur);
+                for(int i = 0;i<listsize;i++)
+                {
+                    stat_file(list[i]);
+                }                
+            }
+            else
+            {
+                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+                list_out_ls(cur);                
+            }
+                          
         }
 
 
