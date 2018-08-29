@@ -6,6 +6,10 @@ background when done,should be printed out with the next prompt
 /rtc date and time  
 ls - block size 
 
+neccesary:
+error handling for fork and all
+
+
 done :
 cd .. 
 cd 

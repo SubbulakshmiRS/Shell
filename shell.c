@@ -6,6 +6,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #include "stat_ls.c"
 #include "args.c"
@@ -22,6 +23,8 @@ char cwd[MAX_LENGTH],hostname[MAX_LENGTH];
 char * user ;
 char home[MAX_LENGTH];
 char cur_rel[MAX_LENGTH];
+int pid ;
+int background;
 //char * cur_rel;
 
 void prompt()
@@ -111,15 +114,17 @@ void list_out_ls(char * cur)
     return ; 
 }
 
-void getFileCreationTime(char * path) {
-    struct stat attr;
-    char * alt = malloc(MAX_LENGTH*sizeof(char));
-    strcpy(alt,path);
-    stat(alt, &attr);
-    char date[10];
-    char * time = ctime(&attr.st_mtime);
-    printf("%s %s\n",path, time);
-    free(alt);
+void check_background()
+{
+    pid = -1;
+    background = 0;
+    for(int i=0;i<tokens_len;i++)
+        if (strcmp(tokens[i],"&") == 0)
+        {   
+            background = 1;
+            return ;
+        }
+    pid = fork();
 }
 
 int main() 
@@ -136,86 +141,94 @@ int main()
         tokens = get_tokens(line);
         printf("%d\n",tokens_len);
 
-        if (strcmp(tokens[0],"cd") == 0)
+        check_background();
+
+        if (pid == 0)
         {
-            if( tokens_len == 1)
+            if (strcmp(tokens[0],"cd") == 0)
             {
-                find_how_back();               
-            }
-            else if (tokens_len == 2)
-            {
-                if (chdir(tokens[1]) < 0)
-                    printf("directory not changed\n");
-            }
-            else if (tokens_len > 2)
-            {
-                printf("more number of arguments than needed %d\n",tokens_len);
-                continue;
-            }
-        }
-
-        else if (strcmp(tokens[0],"pwd") == 0)
-            if (tokens_len == 1)
-                printf("%s\n",cwd);
-            else 
-            {
-                printf("more number of arguments than needed\n");
-                continue;
+                if( tokens_len == 1)
+                {
+                    find_how_back();               
+                }
+                else if (tokens_len == 2)
+                {
+                    if (chdir(tokens[1]) < 0)
+                        printf("directory not changed\n");
+                }
+                else if (tokens_len > 2)
+                {
+                    printf("more number of arguments than needed %d\n",tokens_len);
+                    continue;
+                }
             }
 
-        else if (strcmp(tokens[0],"echo") == 0)
-        {
-            char * p_str = malloc(bufsize*sizeof(char));
+            else if (strcmp(tokens[0],"pwd") == 0)
+                if (tokens_len == 1)
+                    printf("%s\n",cwd);
+                else 
+                {
+                    printf("more number of arguments than needed\n");
+                    continue;
+                }
 
-            strcpy(p_str,"");
-            for (int i=1;i<tokens_len;i++)
+            else if (strcmp(tokens[0],"echo") == 0)
             {
-                strcat(p_str,tokens[i]);
-                strcat(p_str," ");
-            }
-            printf("%s\n",p_str);
-            free(p_str);
-        }  
+                char * p_str = malloc(bufsize*sizeof(char));
 
-        else if(strcmp(tokens[0],"ls") == 0)
-        { 
-            if (tokens[1] == NULL)
-                list_out_ls("."); 
-            else if (strcmp(tokens[1],"-l") == 0)
-            {
-                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-                list = list_all(cur);
-                for(int i = 0;i<listsize;i++)
-                    if (list[i][0] != '.')
+                strcpy(p_str,"");
+                for (int i=1;i<tokens_len;i++)
+                {
+                    strcat(p_str,tokens[i]);
+                    strcat(p_str," ");
+                }
+                printf("%s\n",p_str);
+                free(p_str);
+            }  
+
+            else if(strcmp(tokens[0],"ls") == 0)
+            { 
+                if (tokens[1] == NULL)
+                    list_out_ls("."); 
+                else if (strcmp(tokens[1],"-l") == 0)
+                {
+                    char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+                    list = list_all(cur);
+                    for(int i = 0;i<listsize;i++)
+                        if (list[i][0] != '.')
+                        {
+                            stat_file(list[i]);
+                        } 
+                }
+                else if (strcmp(tokens[1],"-a") == 0)
+                {
+                    char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+                    list = list_all(cur);
+                    for(int i = 0;i<listsize;i++)
+                        printf("%s  ",list[i]);
+                    printf("\n");
+                }
+                else if (strcmp(tokens[1],"-al") == 0 || strcmp(tokens[1],"-la") == 0)
+                {
+                    char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+                    list = list_all(cur);
+                    for(int i = 0;i<listsize;i++)
                     {
                         stat_file(list[i]);
-                    } 
-            }
-            else if (strcmp(tokens[1],"-a") == 0)
-            {
-                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-                list = list_all(cur);
-                for(int i = 0;i<listsize;i++)
-                    printf("%s  ",list[i]);
-                printf("\n");
-            }
-            else if (strcmp(tokens[1],"-al") == 0 || strcmp(tokens[1],"-la") == 0)
-            {
-                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-                list = list_all(cur);
-                for(int i = 0;i<listsize;i++)
+                    }                
+                }
+                else
                 {
-                    stat_file(list[i]);
-                }                
+                    char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+                    list_out_ls(cur);                
+                }
+                            
             }
-            else
-            {
-                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-                list_out_ls(cur);                
-            }
-                          
+            else 
+                execvp(tokens[0],tokens);
         }
-
+        else if (pid != -1)
+            wait(NULL);//background stops
 
     }
 
