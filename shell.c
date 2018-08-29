@@ -10,6 +10,8 @@
 
 #include "stat_ls.c"
 #include "args.c"
+#include "pinfo_data.c"
+
 
 #define MAX_LENGTH 1024
 #define NUM 50
@@ -25,7 +27,7 @@ char home[MAX_LENGTH];
 char cur_rel[MAX_LENGTH];
 int pid ;
 int background;
-//char * cur_rel;
+char shell_pid[MAX_LENGTH];
 
 void prompt()
 {
@@ -67,8 +69,8 @@ void find_how_back()
         printf("directory not changed\n");
     
     free(ret);
-    free(c_str);
-    free(h_str);
+    /*free(c_str);
+    free(h_str);*/
     return ;
 }
 
@@ -130,13 +132,15 @@ int main()
     gethostname(hostname, MAX_LENGTH-1);
     user = getenv("USER");
     getcwd(home,sizeof(home));
+    int x = getpid();
+    sprintf(shell_pid, "%d", x);
 
     while (1)
     {
         prompt();
         line = get_line();
         tokens = get_tokens(line);
-        printf("%d\n",tokens_len);
+        //printf("%d\n",tokens_len);
 
         check_background();
 
@@ -221,12 +225,18 @@ int main()
                 }
                             
             }
+            else if (strcmp(tokens[0],"pinfo") == 0)
+            {
+                if (tokens[1] == NULL)
+                    pid_data(shell_pid);
+                else 
+                    pid_data(tokens[1]);
+            }
             else 
                 execvp(tokens[0],tokens);
         }
         else if (background == 0 && pid != -1)
             wait(NULL);//background stops
-
     }
 
     free(user);
