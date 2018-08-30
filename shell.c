@@ -29,6 +29,15 @@ int pid ;
 int background;
 char shell_pid[MAX_LENGTH];
 
+struct process 
+{
+    int pid;
+    char * name ;
+};
+struct process PROC[MAX_LENGTH];
+int p_len ;
+
+
 void prompt()
 {
     int i;
@@ -116,14 +125,33 @@ void list_out_ls(char * cur)
     return ; 
 }
 
-void check_background()
+void check_background(char * name)
 {
-    pid = -1;
+    pid = -2;
     background = 0;
     for(int i=0;i<tokens_len;i++)
         if (strcmp(tokens[i],"&") == 0)   
             background = 1;
     pid = fork();
+    if (pid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+    else 
+    {
+        PROC[p_len].pid = pid;
+        PROC[p_len].name = name;
+        p_len++;
+    }
+    return ;
+}
+
+void print_background(int a)
+{
+    for(int i=0;i<p_len;i++)
+        if (PROC[i].pid == a)
+            printf("\nProcess stopped pid: %d name: %s\n",PROC[i].pid,PROC[i].name);
+    return ; 
 }
 
 int main() 
@@ -134,6 +162,7 @@ int main()
     getcwd(home,sizeof(home));
     int x = getpid();
     sprintf(shell_pid, "%d", x);
+    int s;
 
     while (1)
     {
@@ -142,7 +171,7 @@ int main()
         tokens = get_tokens(line);
         //printf("%d\n",tokens_len);
 
-        check_background();
+        check_background(tokens[0]);
 
         if (pid == 0)
         {
@@ -235,8 +264,15 @@ int main()
             else 
                 execvp(tokens[0],tokens);
         }
-        else if (background == 0 && pid != -1)
-            wait(NULL);//background stops
+        else if (pid != -2)
+        {
+            int w = waitpid(-1, &s, WNOHANG);
+            if (w != -1)
+                print_background(w);
+            if (background == 0)
+                wait(NULL);//background stops
+        }
+
     }
 
     free(user);
