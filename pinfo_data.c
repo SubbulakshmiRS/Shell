@@ -2,17 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <dirent.h>
 #include<fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 
 #define MAX_LENGTH 1024
 
 void pid_data(char * pid)
 {
-    ssize_t size_read,len =0;
+    ssize_t size_read,len =0,r;
+    struct stat sb;
     char * stat = malloc(MAX_LENGTH*sizeof(char));
     char * exe = malloc(MAX_LENGTH*sizeof(char));
     char line[MAX_LENGTH];
+    char * linkname ;
 
     strcpy(stat,"/proc/");
     strcat(stat,pid);
@@ -22,7 +26,6 @@ void pid_data(char * pid)
     strcat(exe,"/exe");
 
 	FILE * fd_input1 = fopen(stat,"r");
-    FILE * fd_input2 = fopen(exe, "r");
 	if(fd_input1 == NULL)
 	{
 		fprintf(stderr, "Failed to open file \n");
@@ -42,29 +45,31 @@ void pid_data(char * pid)
             break;
         }
     }
-//do i need to tokenize it ? or make sure it doesnt cross the limit of 1024
-    while (fscanf(fd_input2, " %1023s", line) == 1) {
-        lno++;
-        if(lno == 3)
-            printf("Status: %s\n",line);
-        else if(lno == 18)
-        {
-            printf("Virtual Memory: %s\n",line);
-            break;
+
+    if (lstat(exe, &sb) == -1) {
+        exit(EXIT_FAILURE);
+    }
+    else 
+    {
+        linkname = malloc(sb.st_size + 1);
+        if (linkname == NULL) {
+            fprintf(stderr, "insufficient memory\n");
+            exit(EXIT_FAILURE);
         }
+
+        r = readlink(exe, linkname, sb.st_size + 1);
+
+        if (r < 0) {
+            perror("lstat");
+            exit(EXIT_FAILURE);
+        }
+        linkname[sb.st_size] = '\0';
+        printf("Executable: %s\n", linkname);
+        free(linkname);
     }
 
-// the exe file seems to have garbage 
-    /*
-    lno =0;
-    len = 0;
-    while ((size_read = getline(&exe,&len, fd_input2)) != -1)
-    {
-        lno ++;
-    }*/
     free(stat);
     free(exe);
 	fclose(fd_input1);
-	fclose(fd_input2);
     return ;
 }
