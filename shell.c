@@ -148,10 +148,19 @@ void check_background(char * name)
 
 void print_background(int a)
 {
+    if (a != 0)
+        return ;
     for(int i=0;i<p_len;i++)
         if (PROC[i].pid == a)
             printf("\nProcess stopped pid: %d name: %s\n",PROC[i].pid,PROC[i].name);
     return ; 
+}
+
+void print_time()
+{
+    //read the time and date and print in out
+    return ;
+
 }
 
 int main() 
@@ -184,7 +193,7 @@ int main()
                 else if (tokens_len == 2)
                 {
                     if (chdir(tokens[1]) < 0)
-                        printf("directory not changed\n");
+                        printf(" %s bcsah directory not changed\n",tokens[1]);
                 }
                 else if (tokens_len > 2)
                 {
@@ -261,13 +270,29 @@ int main()
                 else 
                     pid_data(tokens[1]);
             }
+            else if (strcmp(tokens[0],"remindme") == 0)
+            {
+                if( tokens[1] != NULL && tokens[2] != NULL)
+                {
+                    sleep((int)( *tokens[1]));
+                    printf("%s\n",tokens[2]);
+                }
+            }
+            else if(strcmp(tokens[0],"clock") == 0 && strcmp(tokens[1],"-t") == 0)
+            {
+                while(1)
+                {
+                    sleep((int)( *tokens[2]));
+                    print_time();
+                }                
+            } 
             else 
                 execvp(tokens[0],tokens);
         }
-        else if (pid != -2)
+        else if (pid > 0)
         {
             int w = waitpid(-1, &s, WNOHANG);
-            if (w != -1)
+            if (w != -1 && w != 0)
                 print_background(w);
             if (background == 0)
                 wait(NULL);//background stops
