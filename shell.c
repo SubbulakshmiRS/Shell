@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <signal.h>
 
 #include "stat_ls.c"
 #include "args.c"
@@ -38,6 +39,10 @@ struct process
 struct process PROC[MAX_LENGTH];
 int p_len ;
 
+void sighandler(int signum) {
+    if (getpid() != atoi(shell_pid))
+        kill(getpid(),SIGHUP);
+}
 
 void prompt()
 {
@@ -254,6 +259,7 @@ int main()
 
     while (1)
     {
+        signal(SIGINT, sighandler);
         print_background();
         prompt();
         line = get_line();
@@ -269,6 +275,11 @@ int main()
             command_ls();
         else if (strcmp(tokens[0],"pinfo") == 0)
             command_pinfo();
+        else if (strcmp(tokens[0],"exit()") == 0)
+        {
+            printf("\nBYE!\n");
+            return 0;
+        }
         else if (strcmp(tokens[0],"remindme") == 0)
         {
             int pid = fork();
@@ -299,11 +310,19 @@ int main()
         }
         else if(strcmp(tokens[0],"clock") == 0 && strcmp(tokens[1],"-t") == 0)
         {
-            while(1)
+            int pid = fork();
+            if (pid == 0)
+                while(1)
+                {
+                    sleep(atoi(tokens[2]));
+                    print_time();
+                }   
+            else if (pid > 0)
             {
-                sleep((int)( *tokens[2]));
-                print_time();
-            }                
+                int status ;
+                waitpid(pid, &status, 0);
+            }
+
         } 
         else 
         {

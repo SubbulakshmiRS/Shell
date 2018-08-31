@@ -2,19 +2,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void print_time()
-{
-    //read the time and date and print in out
-    return ;
-
-}
-
-void get_time()
+char * get_time()
 {
     time_t current_time;
     char* c_time_string;
 
-    /* Obtain current time. */
     current_time = time(NULL);
 
     if (current_time == ((time_t)-1))
@@ -32,7 +24,14 @@ void get_time()
         exit(EXIT_FAILURE);
     }
 
-    /* Print to stdout. ctime() has already added a terminating newline character. */
-    (void) printf("Current time is %s", c_time_string);
-    exit(EXIT_SUCCESS);
+    return c_time_string;
+}
+
+void print_time()
+{
+    //read the time and date and print in out
+    char * ans= get_time();
+    printf("%s",ans);
+    return ;
+
 }
