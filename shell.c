@@ -9,9 +9,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#include "stat_ls.c"
+#include "commands.c"
 #include "args.c"
-#include "pinfo_data.c"
 #include "time_file.c"
 //#include "directory.c"
 
@@ -22,7 +21,7 @@
 char * line ;
 char ** tokens;
 char ** list;
-int listsize;
+int * listsize;
 char cwd[MAX_LENGTH],hostname[MAX_LENGTH];
 char * user ;
 char home[MAX_LENGTH];
@@ -62,67 +61,6 @@ void prompt()
     printf("<%s@%s:%s>",user,hostname,cur_rel);
 
     return ;
-}
-
-void find_how_back()
-{
-    char * ret = malloc(MAX_LENGTH*sizeof(char));
-    strcpy(ret,"");
-    char * h_str = home;
-    char * c_str = cwd;
-    int a =strlen(h_str),b=strlen(c_str);
-
-    for(int i = a;i<b;i++)
-        if (cwd[i] == '/')
-            strcat(ret,"../");
-
-    if (chdir(ret) < 0)
-        printf("directory not changed\n");
-    
-    free(ret);
-    /*free(c_str);
-    free(h_str);*/
-    return ;
-}
-
-char ** list_all(char * cur)
-{
-    struct dirent *de;  
-    char ** list = malloc(MAX_LENGTH*sizeof(char *));
-    listsize = MAX_LENGTH;
-
-    DIR *dr = opendir(cur);
-    if (dr == NULL)  // opendir returns NULL if couldn't open directory
-    {
-        printf("Could not open current directory" );
-        return 0;
-    }
-
-    int pos = 0;
-    while ((de = readdir(dr)) != NULL)
-    {
-        if (pos >= listsize)
-        {
-            listsize += MAX_LENGTH;
-            list = realloc(list,listsize*sizeof(char *));
-        } 
-        list[pos] = de->d_name;
-        pos++;
-
-    }
-    closedir(dr); 
-    listsize = pos;   
-    return list ;
-}
-
-void list_out_ls(char * cur)
-{
-    list = list_all(cur);
-    for(int i = 0;i<listsize;i++)
-        if (list[i][0] != '.')
-            printf("%s  ",list[i]);
-    printf("\n"); 
-    return ; 
 }
 
 void store(char * name,int pid,int x, char * statement)
@@ -169,85 +107,6 @@ void print_background()
     return ;
 }
 
-void command_cd()
-{
-    if( tokens_len == 1)
-        find_how_back();               
-    else if (tokens_len == 2)
-        if (chdir(tokens[1]) < 0)
-            printf(" %s directory not changed\n",tokens[1]);
-    else if (tokens_len > 2)
-        printf("more number of arguments than needed %d\n",tokens_len);
-}
-
-void command_pwd()
-{
-    if (tokens_len == 1)
-        printf("%s\n",cwd);
-    else 
-        printf("more number of arguments than needed\n");
-}
-
-void command_echo()
-{
-    char * p_str = malloc(bufsize*sizeof(char));
-
-    strcpy(p_str,"");
-    for (int i=1;i<tokens_len;i++)
-    {
-        strcat(p_str,tokens[i]);
-        strcat(p_str," ");
-    }
-    printf("%s\n",p_str);
-    free(p_str);
-}
-
-void command_ls()
-{
-    if (tokens[1] == NULL)
-        list_out_ls("."); 
-    else if (strcmp(tokens[1],"-l") == 0)
-    {
-        char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-        list = list_all(cur);
-        for(int i = 0;i<listsize;i++)
-            if (list[i][0] != '.')
-            {
-                stat_file(list[i]);
-            } 
-    }
-    else if (strcmp(tokens[1],"-a") == 0)
-    {
-        char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-        list = list_all(cur);
-        for(int i = 0;i<listsize;i++)
-            printf("%s  ",list[i]);
-        printf("\n");
-    }
-    else if (strcmp(tokens[1],"-al") == 0 || strcmp(tokens[1],"-la") == 0)
-    {
-        char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-        list = list_all(cur);
-        for(int i = 0;i<listsize;i++)
-        {
-            stat_file(list[i]);
-        }                
-    }
-    else
-    {
-        char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-        list_out_ls(cur);                
-    }
-}
-
-void command_pinfo()
-{
-    if (tokens[1] == NULL)
-        pid_data(shell_pid);
-    else 
-        pid_data(tokens[1]);
-}
-
 int main() 
 {
     p_len = 0;
@@ -266,15 +125,15 @@ int main()
         tokens = get_tokens(line);
 
         if (strcmp(tokens[0],"cd") == 0)
-            command_cd();
+            command_cd(tokens,tokens_len,cwd,home);
         else if (strcmp(tokens[0],"pwd") == 0)
-            command_pwd();
+            command_pwd(tokens,tokens_len,cwd);
         else if (strcmp(tokens[0],"echo") == 0)
-            command_echo();
+            command_echo(tokens,tokens_len);
         else if(strcmp(tokens[0],"ls") == 0)
-            command_ls();
+            list = command_ls(tokens,tokens_len,&listsize);
         else if (strcmp(tokens[0],"pinfo") == 0)
-            command_pinfo();
+            command_pinfo(shell_pid,tokens,tokens_len);
         else if (strcmp(tokens[0],"exit()") == 0)
         {
             printf("\nBYE!\n");
@@ -358,7 +217,7 @@ int main()
     for(int i =0;i<tokens_len;i++)
         free(tokens[i]);
     free(tokens);
-    for(int i =0;i<listsize;i++)
+    for(int i =0;i<(*listsize);i++)
         free(list[i]);
     free(list);
     return 0;
