@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+void print_time()
+{
+    //read the time and date and print in out
+    return ;
+
+}
+
 void get_time()
 {
     time_t current_time;

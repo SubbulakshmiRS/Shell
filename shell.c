@@ -11,8 +11,8 @@
 #include "stat_ls.c"
 #include "args.c"
 #include "pinfo_data.c"
-#include "time_file"
-
+#include "time_file.c"
+//#include "directory.c"
 
 #define MAX_LENGTH 1024
 #define NUM 50
@@ -42,7 +42,6 @@ int p_len ;
 void prompt()
 {
     int i;
-
     if (getcwd(cwd, sizeof(cwd)) == NULL)
         perror("getcwd() error");
     
@@ -57,10 +56,7 @@ void prompt()
 
     printf("<%s@%s:%s>",user,hostname,cur_rel);
 
-    /*free(c_str);
-    free(h_str);*/
     return ;
-
 }
 
 void find_how_back()
@@ -86,11 +82,10 @@ void find_how_back()
 
 char ** list_all(char * cur)
 {
-    struct dirent *de;  // Pointer for directory entry
+    struct dirent *de;  
     char ** list = malloc(MAX_LENGTH*sizeof(char *));
     listsize = MAX_LENGTH;
 
-    // opendir() returns a pointer of DIR type. 
     DIR *dr = opendir(cur);
     if (dr == NULL)  // opendir returns NULL if couldn't open directory
     {
@@ -110,7 +105,6 @@ char ** list_all(char * cur)
         pos++;
 
     }
-
     closedir(dr); 
     listsize = pos;   
     return list ;
@@ -153,26 +147,100 @@ int check_background()
 
 void print_background()
 {
-    int s;
-    for(int i=0;i<p_len;i++)
-    {
-        int w = waitpid(PROC[i].pid,&s,WNOHANG | WUNTRACED);
-        if (w != -1 && WIFEXITED(s) && PROC[i].stat == 0)
+    int s,pid;
+    while ( (pid = waitpid(-1, &s, WNOHANG)) > 0)
+        for(int i=0;i<p_len;i++)
         {
-            if (strcmp(PROC[i].name,"remindme") == 0)
-                printf("Reminder: %s\n",PROC[i].statement);
-            printf("Process has exited normally %d %s\n",PROC[i].pid,PROC[i].name);
-            PROC[i].stat = 1;
+            if (PROC[i].pid == pid)
+            {
+                if (strcmp(PROC[i].name,"remindme") == 0)
+                    printf("Reminder: %s\n",PROC[i].statement);               
+                printf("Process has exited normally %d %s\n",PROC[i].pid,PROC[i].name);
+                PROC[i].stat = 1;  
+                break; 
+            }
         }
-    }
-    return ; 
+    
+    return ;
 }
 
-void print_time()
+void command_cd()
 {
-    //read the time and date and print in out
-    return ;
+    if( tokens_len == 1)
+        find_how_back();               
+    else if (tokens_len == 2)
+        if (chdir(tokens[1]) < 0)
+            printf(" %s directory not changed\n",tokens[1]);
+    else if (tokens_len > 2)
+        printf("more number of arguments than needed %d\n",tokens_len);
+}
 
+void command_pwd()
+{
+    if (tokens_len == 1)
+        printf("%s\n",cwd);
+    else 
+        printf("more number of arguments than needed\n");
+}
+
+void command_echo()
+{
+    char * p_str = malloc(bufsize*sizeof(char));
+
+    strcpy(p_str,"");
+    for (int i=1;i<tokens_len;i++)
+    {
+        strcat(p_str,tokens[i]);
+        strcat(p_str," ");
+    }
+    printf("%s\n",p_str);
+    free(p_str);
+}
+
+void command_ls()
+{
+    if (tokens[1] == NULL)
+        list_out_ls("."); 
+    else if (strcmp(tokens[1],"-l") == 0)
+    {
+        char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+        list = list_all(cur);
+        for(int i = 0;i<listsize;i++)
+            if (list[i][0] != '.')
+            {
+                stat_file(list[i]);
+            } 
+    }
+    else if (strcmp(tokens[1],"-a") == 0)
+    {
+        char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+        list = list_all(cur);
+        for(int i = 0;i<listsize;i++)
+            printf("%s  ",list[i]);
+        printf("\n");
+    }
+    else if (strcmp(tokens[1],"-al") == 0 || strcmp(tokens[1],"-la") == 0)
+    {
+        char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+        list = list_all(cur);
+        for(int i = 0;i<listsize;i++)
+        {
+            stat_file(list[i]);
+        }                
+    }
+    else
+    {
+        char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+        list_out_ls(cur);                
+    }
+}
+
+void command_pinfo()
+{
+    if (tokens[1] == NULL)
+        pid_data(shell_pid);
+    else 
+        pid_data(tokens[1]);
 }
 
 int main() 
@@ -182,8 +250,7 @@ int main()
     gethostname(hostname, MAX_LENGTH-1);
     user = getenv("USER");
     getcwd(home,sizeof(home));
-    int x = getpid();
-    sprintf(shell_pid, "%d", x);
+    sprintf(shell_pid, "%d", getpid());
 
     while (1)
     {
@@ -192,93 +259,16 @@ int main()
         line = get_line();
         tokens = get_tokens(line);
 
-
         if (strcmp(tokens[0],"cd") == 0)
-        {
-            if( tokens_len == 1)
-            {
-                find_how_back();               
-            }
-            else if (tokens_len == 2)
-            {
-                if (chdir(tokens[1]) < 0)
-                    printf(" %s directory not changed\n",tokens[1]);
-            }
-            else if (tokens_len > 2)
-            {
-                printf("more number of arguments than needed %d\n",tokens_len);
-                continue;
-            }
-        }
-
+            command_cd();
         else if (strcmp(tokens[0],"pwd") == 0)
-            if (tokens_len == 1)
-                printf("%s\n",cwd);
-            else 
-            {
-                printf("more number of arguments than needed\n");
-                continue;
-            }
-
+            command_pwd();
         else if (strcmp(tokens[0],"echo") == 0)
-        {
-            char * p_str = malloc(bufsize*sizeof(char));
-
-            strcpy(p_str,"");
-            for (int i=1;i<tokens_len;i++)
-            {
-                strcat(p_str,tokens[i]);
-                strcat(p_str," ");
-            }
-            printf("%s\n",p_str);
-            free(p_str);
-        }  
-
+            command_echo();
         else if(strcmp(tokens[0],"ls") == 0)
-        { 
-            if (tokens[1] == NULL)
-                list_out_ls("."); 
-            else if (strcmp(tokens[1],"-l") == 0)
-            {
-                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-                list = list_all(cur);
-                for(int i = 0;i<listsize;i++)
-                    if (list[i][0] != '.')
-                    {
-                        stat_file(list[i]);
-                    } 
-            }
-            else if (strcmp(tokens[1],"-a") == 0)
-            {
-                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-                list = list_all(cur);
-                for(int i = 0;i<listsize;i++)
-                    printf("%s  ",list[i]);
-                printf("\n");
-            }
-            else if (strcmp(tokens[1],"-al") == 0 || strcmp(tokens[1],"-la") == 0)
-            {
-                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-                list = list_all(cur);
-                for(int i = 0;i<listsize;i++)
-                {
-                    stat_file(list[i]);
-                }                
-            }
-            else
-            {
-                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-                list_out_ls(cur);                
-            }
-                        
-        }
+            command_ls();
         else if (strcmp(tokens[0],"pinfo") == 0)
-        {
-            if (tokens[1] == NULL)
-                pid_data(shell_pid);
-            else 
-                pid_data(tokens[1]);
-        }
+            command_pinfo();
         else if (strcmp(tokens[0],"remindme") == 0)
         {
             int pid = fork();
@@ -323,7 +313,6 @@ int main()
             if (pid == 0) 
             {
                 // Child process
-                
                 if (execvp(tokens[0],tokens) == -1) {
                 perror("lsh");
                 }
@@ -340,14 +329,9 @@ int main()
                 int status;
                 store(tokens[0],pid,x,NULL);
                 if (x != 1)
-                {
                     waitpid(pid, &status, 0);
-                }
-
             }
-
         }
-
     }
 
     free(user);
