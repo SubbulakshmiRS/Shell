@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include<fcntl.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -47,6 +47,7 @@ void pid_data(char * pid)
     }
 
     if (lstat(exe, &sb) == -1) {
+        
         exit(EXIT_FAILURE);
     }
     else 
@@ -63,7 +64,8 @@ void pid_data(char * pid)
             perror("lstat");
             exit(EXIT_FAILURE);
         }
-        linkname[sb.st_size] = '\0';
+        //printf("%d\n",r); //always prints nothing not a.out
+        linkname[r] = '\0';
         printf("Executable: %s\n", linkname);
         free(linkname);
     }

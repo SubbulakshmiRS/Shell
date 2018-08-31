@@ -11,6 +11,7 @@
 #include "stat_ls.c"
 #include "args.c"
 #include "pinfo_data.c"
+#include "time_file"
 
 
 #define MAX_LENGTH 1024
@@ -25,14 +26,14 @@ char cwd[MAX_LENGTH],hostname[MAX_LENGTH];
 char * user ;
 char home[MAX_LENGTH];
 char cur_rel[MAX_LENGTH];
-int pid ;
-int background;
 char shell_pid[MAX_LENGTH];
 
 struct process 
 {
     int pid;
     char * name ;
+    int stat;
+    char * statement;
 };
 struct process PROC[MAX_LENGTH];
 int p_len ;
@@ -125,34 +126,45 @@ void list_out_ls(char * cur)
     return ; 
 }
 
-void check_background(char * name)
+void store(char * name,int pid,int x, char * statement)
 {
-    pid = -2;
-    background = 0;
-    for(int i=0;i<tokens_len;i++)
-        if (strcmp(tokens[i],"&") == 0)   
-            background = 1;
-    pid = fork();
-    if (pid == -1) {
-        perror("fork");
-        exit(EXIT_FAILURE);
-    }
-    else 
+    if(x != 0)
     {
         PROC[p_len].pid = pid;
         PROC[p_len].name = name;
+        PROC[p_len].statement = statement;
         p_len++;
     }
-    return ;
+
 }
 
-void print_background(int a)
+int check_background()
 {
-    if (a != 0)
-        return ;
+    int background = 0;
+    for(int i=0;i<tokens_len;i++)
+        if (strcmp(tokens[i],"&") == 0)   
+            {
+                background = 1;
+                tokens[i] = NULL;
+                tokens_len--;
+            }
+    return background;
+}
+
+void print_background()
+{
+    int s;
     for(int i=0;i<p_len;i++)
-        if (PROC[i].pid == a)
-            printf("\nProcess stopped pid: %d name: %s\n",PROC[i].pid,PROC[i].name);
+    {
+        int w = waitpid(PROC[i].pid,&s,WNOHANG | WUNTRACED);
+        if (w != -1 && WIFEXITED(s) && PROC[i].stat == 0)
+        {
+            if (strcmp(PROC[i].name,"remindme") == 0)
+                printf("Reminder: %s\n",PROC[i].statement);
+            printf("Process has exited normally %d %s\n",PROC[i].pid,PROC[i].name);
+            PROC[i].stat = 1;
+        }
+    }
     return ; 
 }
 
@@ -165,137 +177,175 @@ void print_time()
 
 int main() 
 {
+    p_len = 0;
     hostname[MAX_LENGTH-1] = '\0';
     gethostname(hostname, MAX_LENGTH-1);
     user = getenv("USER");
     getcwd(home,sizeof(home));
     int x = getpid();
     sprintf(shell_pid, "%d", x);
-    int s;
 
     while (1)
     {
+        print_background();
         prompt();
         line = get_line();
         tokens = get_tokens(line);
-        //printf("%d\n",tokens_len);
 
-        check_background(tokens[0]);
 
-        if (pid == 0)
+        if (strcmp(tokens[0],"cd") == 0)
         {
-            if (strcmp(tokens[0],"cd") == 0)
+            if( tokens_len == 1)
             {
-                if( tokens_len == 1)
-                {
-                    find_how_back();               
-                }
-                else if (tokens_len == 2)
-                {
-                    if (chdir(tokens[1]) < 0)
-                        printf(" %s bcsah directory not changed\n",tokens[1]);
-                }
-                else if (tokens_len > 2)
-                {
-                    printf("more number of arguments than needed %d\n",tokens_len);
-                    continue;
-                }
+                find_how_back();               
+            }
+            else if (tokens_len == 2)
+            {
+                if (chdir(tokens[1]) < 0)
+                    printf(" %s directory not changed\n",tokens[1]);
+            }
+            else if (tokens_len > 2)
+            {
+                printf("more number of arguments than needed %d\n",tokens_len);
+                continue;
+            }
+        }
+
+        else if (strcmp(tokens[0],"pwd") == 0)
+            if (tokens_len == 1)
+                printf("%s\n",cwd);
+            else 
+            {
+                printf("more number of arguments than needed\n");
+                continue;
             }
 
-            else if (strcmp(tokens[0],"pwd") == 0)
-                if (tokens_len == 1)
-                    printf("%s\n",cwd);
-                else 
-                {
-                    printf("more number of arguments than needed\n");
-                    continue;
-                }
+        else if (strcmp(tokens[0],"echo") == 0)
+        {
+            char * p_str = malloc(bufsize*sizeof(char));
 
-            else if (strcmp(tokens[0],"echo") == 0)
+            strcpy(p_str,"");
+            for (int i=1;i<tokens_len;i++)
             {
-                char * p_str = malloc(bufsize*sizeof(char));
+                strcat(p_str,tokens[i]);
+                strcat(p_str," ");
+            }
+            printf("%s\n",p_str);
+            free(p_str);
+        }  
 
-                strcpy(p_str,"");
-                for (int i=1;i<tokens_len;i++)
-                {
-                    strcat(p_str,tokens[i]);
-                    strcat(p_str," ");
-                }
-                printf("%s\n",p_str);
-                free(p_str);
-            }  
-
-            else if(strcmp(tokens[0],"ls") == 0)
-            { 
-                if (tokens[1] == NULL)
-                    list_out_ls("."); 
-                else if (strcmp(tokens[1],"-l") == 0)
-                {
-                    char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-                    list = list_all(cur);
-                    for(int i = 0;i<listsize;i++)
-                        if (list[i][0] != '.')
-                        {
-                            stat_file(list[i]);
-                        } 
-                }
-                else if (strcmp(tokens[1],"-a") == 0)
-                {
-                    char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-                    list = list_all(cur);
-                    for(int i = 0;i<listsize;i++)
-                        printf("%s  ",list[i]);
-                    printf("\n");
-                }
-                else if (strcmp(tokens[1],"-al") == 0 || strcmp(tokens[1],"-la") == 0)
-                {
-                    char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-                    list = list_all(cur);
-                    for(int i = 0;i<listsize;i++)
+        else if(strcmp(tokens[0],"ls") == 0)
+        { 
+            if (tokens[1] == NULL)
+                list_out_ls("."); 
+            else if (strcmp(tokens[1],"-l") == 0)
+            {
+                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+                list = list_all(cur);
+                for(int i = 0;i<listsize;i++)
+                    if (list[i][0] != '.')
                     {
                         stat_file(list[i]);
-                    }                
-                }
-                else
-                {
-                    char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-                    list_out_ls(cur);                
-                }
-                            
+                    } 
             }
-            else if (strcmp(tokens[0],"pinfo") == 0)
+            else if (strcmp(tokens[1],"-a") == 0)
             {
-                if (tokens[1] == NULL)
-                    pid_data(shell_pid);
-                else 
-                    pid_data(tokens[1]);
+                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+                list = list_all(cur);
+                for(int i = 0;i<listsize;i++)
+                    printf("%s  ",list[i]);
+                printf("\n");
             }
-            else if (strcmp(tokens[0],"remindme") == 0)
+            else if (strcmp(tokens[1],"-al") == 0 || strcmp(tokens[1],"-la") == 0)
             {
-                if( tokens[1] != NULL && tokens[2] != NULL)
+                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+                list = list_all(cur);
+                for(int i = 0;i<listsize;i++)
                 {
-                    sleep((int)( *tokens[1]));
-                    printf("%s\n",tokens[2]);
-                }
-            }
-            else if(strcmp(tokens[0],"clock") == 0 && strcmp(tokens[1],"-t") == 0)
-            {
-                while(1)
-                {
-                    sleep((int)( *tokens[2]));
-                    print_time();
+                    stat_file(list[i]);
                 }                
+            }
+            else
+            {
+                char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+                list_out_ls(cur);                
+            }
+                        
+        }
+        else if (strcmp(tokens[0],"pinfo") == 0)
+        {
+            if (tokens[1] == NULL)
+                pid_data(shell_pid);
+            else 
+                pid_data(tokens[1]);
+        }
+        else if (strcmp(tokens[0],"remindme") == 0)
+        {
+            int pid = fork();
+            char * statement ;
+            strcpy(statement,tokens[2]);
+            if (pid == 0) 
+            {
+                // Child process
+                strcpy(tokens[0],"sleep");
+                tokens[2] = NULL;
+                tokens_len = 2;                
+                if (execvp(tokens[0],tokens) == -1) {
+                perror("lsh");
+                }
+                exit(EXIT_FAILURE);
+            } 
+            else if (pid < 0) 
+            {
+                // Error forking
+                perror("lsh");
             } 
             else 
-                execvp(tokens[0],tokens);
+            {
+                // Parent process
+                store("remindme",pid,1,statement);
+            }
+           
         }
-        else if (pid > 0)
+        else if(strcmp(tokens[0],"clock") == 0 && strcmp(tokens[1],"-t") == 0)
         {
-            int w = waitpid(-1, &s, WNOHANG);
-            if (w != -1 && w != 0)
-                print_background(w);
-            if (background == 0)
-                wait(NULL);//background stops
+            while(1)
+            {
+                sleep((int)( *tokens[2]));
+                print_time();
+            }                
+        } 
+        else 
+        {
+            int pid;
+            int x=check_background();
+            pid = fork();
+            if (pid == 0) 
+            {
+                // Child process
+                
+                if (execvp(tokens[0],tokens) == -1) {
+                perror("lsh");
+                }
+                exit(EXIT_FAILURE);
+            } 
+            else if (pid < 0) 
+            {
+                // Error forking
+                perror("lsh");
+            } 
+            else 
+            {
+                // Parent process
+                int status;
+                store(tokens[0],pid,x,NULL);
+                if (x != 1)
+                {
+                    waitpid(pid, &status, 0);
+                }
+
+            }
+
         }
 
     }
