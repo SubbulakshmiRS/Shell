@@ -42,17 +42,21 @@ void command_echo(char ** tokens,int tokens_len)
     free(p_str);
 }
 
-char** command_ls(char ** tokens,int tokens_len,int *listsize)
+char** command_ls(char ** tokens,int tokens_len,int * lsize)
 {
+    int x =0 ;
+    int * listsize = &x;
+
     char ** list;
     if (tokens[1] == NULL)
-        list_out_ls("."); 
+        list=list_out_ls(".",listsize); 
     else if (strcmp(tokens[1],"-l") == 0)
     {
         char * cur = (tokens[2] != NULL)?tokens[2]:(".");
         list = list_all(cur,listsize);
-        for(int i = 0;i<(*listsize);i++)
-            if (list[i][0] != '.')
+        int l = *listsize;
+        for(int i = 0;i<l;i++)
+            if (list[i] != NULL && list[i][0] != '.')
             {
                 stat_file(list[i]);
             } 
@@ -77,8 +81,10 @@ char** command_ls(char ** tokens,int tokens_len,int *listsize)
     else
     {
         char * cur = (tokens[1] != NULL)?tokens[1]:(".");
-        list_out_ls(cur);                
+        list= list_out_ls(cur,listsize);                
     }
+
+    lsize = (listsize);
     return list;
 }
 

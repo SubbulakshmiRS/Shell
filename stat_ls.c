@@ -10,6 +10,8 @@
 //for ls -l , all info is got from stat
 void stat_file(char * path)
 {
+    if (path == NULL || strcmp(path,"") == 0)
+        return ;
     struct group *grp;
     struct passwd *pwd;
     struct stat fileStat;
@@ -19,14 +21,13 @@ void stat_file(char * path)
 
     if(stat(alt,&fileStat) < 0)    
     {
-        printf("stat error\n");
+        printf("stat error for file:%s\n",path);
         return ;
     }
 
     pwd = getpwuid(fileStat.st_uid);
     grp = getgrgid(fileStat.st_gid);
     char * time = ctime(&fileStat.st_mtime);
-
     printf("%s ",path);
     printf("%d ",(int)fileStat.st_size);
     printf("%d ",(int)fileStat.st_nlink);

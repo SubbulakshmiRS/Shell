@@ -56,15 +56,13 @@ char ** list_all(char * cur,int * listsize )
 }
 
 //print the list out 
-void list_out_ls(char * cur)
+char ** list_out_ls(char * cur,int * listsize)
 {
-    int x = 0;
-    int * listsize = &x ;
     char ** list = list_all(cur,listsize);
     int l = *listsize;
     for(int i = 0;i<l;i++)
         if (list[i][0] != '.')
             printf("%s  ",list[i]);
     printf("\n"); 
-    return ; 
+    return list; 
 }
