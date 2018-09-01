@@ -9,6 +9,7 @@
 
 int tokens_len,bufsize;
 
+//take in the input 
 char * get_line()
 {
     char * buffer = malloc(sizeof(char)*MAX_LENGTH);
@@ -23,7 +24,6 @@ char * get_line()
 
     while (1) 
     {
-        // Read a character
         c = getchar();
 
         // If we hit EOF, replace it with a null character and return.
@@ -50,7 +50,7 @@ char * get_line()
     }
 }
 
-
+//tokenize the input line with given delimiters
 char ** get_tokens(char * input)
 {
     char ** tokens = malloc(sizeof(char *)*NUM);

@@ -9,10 +9,9 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#include "commands.c"
-#include "args.c"
-#include "time_file.c"
-//#include "directory.c"
+#include "commands.c" //for different inbuilt commands
+#include "args.c" // for accepting inputs 
+#include "time_file.c" //for pinfo
 
 #define MAX_LENGTH 1024
 #define NUM 50
@@ -34,14 +33,16 @@ struct process
     char * name ;
     int stat;
     char * statement;
-};
+}; //for different background processes
+
 struct process PROC[MAX_LENGTH];
 int p_len ;
 
+//for ctrl+C
 void sighandler(int signum) {
     if (getpid() != atoi(shell_pid))
         kill(getpid(),SIGHUP);
-}
+} 
 
 void prompt()
 {
@@ -63,6 +64,7 @@ void prompt()
     return ;
 }
 
+//store info about each background process called 
 void store(char * name,int pid,int x, char * statement)
 {
     if(x != 0)
@@ -75,6 +77,7 @@ void store(char * name,int pid,int x, char * statement)
 
 }
 
+// check whether the process is a background one
 int check_background()
 {
     int background = 0;
@@ -88,6 +91,7 @@ int check_background()
     return background;
 }
 
+//print for all background process which have ended smoothly
 void print_background()
 {
     int s,pid;
@@ -131,7 +135,7 @@ int main()
         else if (strcmp(tokens[0],"echo") == 0)
             command_echo(tokens,tokens_len);
         else if(strcmp(tokens[0],"ls") == 0)
-            list = command_ls(tokens,tokens_len,&listsize);
+            list = command_ls(tokens,tokens_len,listsize);
         else if (strcmp(tokens[0],"pinfo") == 0)
             command_pinfo(shell_pid,tokens,tokens_len);
         else if (strcmp(tokens[0],"exit()") == 0)

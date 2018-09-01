@@ -3,9 +3,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "stat_ls.c"
-#include "pinfo_data.c"
-#include "directory.c"
+#include "stat_ls.c" //for ls -l 
+#include "pinfo_data.c" // for pinfo 
+#include "directory.c" //for cd 
 
 #define MAX_LENGTH 1024
 
@@ -50,8 +50,8 @@ char** command_ls(char ** tokens,int tokens_len,int *listsize)
     else if (strcmp(tokens[1],"-l") == 0)
     {
         char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-        list = list_all(cur,&listsize);
-        for(int i = 0;i<listsize;i++)
+        list = list_all(cur,listsize);
+        for(int i = 0;i<(*listsize);i++)
             if (list[i][0] != '.')
             {
                 stat_file(list[i]);
@@ -60,23 +60,23 @@ char** command_ls(char ** tokens,int tokens_len,int *listsize)
     else if (strcmp(tokens[1],"-a") == 0)
     {
         char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-        list = list_all(cur,&listsize);
-        for(int i = 0;i<listsize;i++)
+        list = list_all(cur,listsize);
+        for(int i = 0;i<(*listsize);i++)
             printf("%s  ",list[i]);
         printf("\n");
     }
     else if (strcmp(tokens[1],"-al") == 0 || strcmp(tokens[1],"-la") == 0)
     {
         char * cur = (tokens[2] != NULL)?tokens[2]:(".");
-        list = list_all(cur,&listsize);
-        for(int i = 0;i<listsize;i++)
+        list = list_all(cur,listsize);
+        for(int i = 0;i<(*listsize);i++)
         {
             stat_file(list[i]);
         }                
     }
     else
     {
-        char * cur = (tokens[2] != NULL)?tokens[2]:(".");
+        char * cur = (tokens[1] != NULL)?tokens[1]:(".");
         list_out_ls(cur);                
     }
     return list;

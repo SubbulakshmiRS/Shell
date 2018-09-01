@@ -6,7 +6,8 @@
 #include <grp.h>
 
 #define MAX_LENGTH 1024
- 
+
+//for ls -l , all info is got from stat
 void stat_file(char * path)
 {
     struct group *grp;

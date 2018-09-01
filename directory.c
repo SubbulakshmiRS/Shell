@@ -6,6 +6,7 @@
 
 #define MAX_LENGTH 1024
 
+//for ls and we have to find how back we have to go to home
 void find_how_back(char * h_str,char * c_str)
 {
     char * ret = malloc(MAX_LENGTH*sizeof(char));
@@ -23,11 +24,12 @@ void find_how_back(char * h_str,char * c_str)
     return ;
 }
 
+//storing the list of files in current directory
 char ** list_all(char * cur,int * listsize )
 {
     struct dirent *de;  
     char ** list = malloc(MAX_LENGTH*sizeof(char *));
-    listsize = MAX_LENGTH;
+    int l = MAX_LENGTH;
 
     DIR *dr = opendir(cur);
     if (dr == NULL)  // opendir returns NULL if couldn't open directory
@@ -39,25 +41,28 @@ char ** list_all(char * cur,int * listsize )
     int pos = 0;
     while ((de = readdir(dr)) != NULL)
     {
-        if (pos >= (*listsize))
+        if (pos >= l)
         {
-            listsize += MAX_LENGTH;
-            list = realloc(list,(*listsize)*sizeof(char *));
+            l += MAX_LENGTH;
+            list = realloc(list,l*sizeof(char *));
         } 
         list[pos] = de->d_name;
         pos++;
 
     }
-    closedir(dr); 
-    listsize = pos;   
+    closedir(dr);
+    *listsize = pos;
     return list ;
 }
 
+//print the list out 
 void list_out_ls(char * cur)
 {
-    int * listsize ;
-    char ** list = list_all(cur,&listsize);
-    for(int i = 0;i<(*listsize);i++)
+    int x = 0;
+    int * listsize = &x ;
+    char ** list = list_all(cur,listsize);
+    int l = *listsize;
+    for(int i = 0;i<l;i++)
         if (list[i][0] != '.')
             printf("%s  ",list[i]);
     printf("\n"); 
