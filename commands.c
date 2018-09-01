@@ -49,7 +49,16 @@ char** command_ls(char ** tokens,int tokens_len,int * lsize)
 
     char ** list;
     if (tokens[1] == NULL)
-        list=list_out_ls(".",listsize); 
+        list=list_out_ls(".",listsize);
+    else if ((!strcmp(tokens[1],"-a") && !strcmp(tokens[2],"-l")) || (!strcmp(tokens[1],"-l") && !strcmp(tokens[2],"-a")))
+    {
+        char * cur = (tokens[3] != NULL)?tokens[3]:(".");
+        list = list_all(cur,listsize);
+        for(int i = 0;i<(*listsize);i++)
+        {
+            stat_file(list[i]);
+        } 
+    }
     else if (strcmp(tokens[1],"-l") == 0)
     {
         char * cur = (tokens[2] != NULL)?tokens[2]:(".");
