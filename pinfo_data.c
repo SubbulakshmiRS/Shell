@@ -6,12 +6,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-
-#define MAX_LENGTH 1024
+#include "main.h"
 
 void pid_data(char * pid)
 {
-    ssize_t size_read,len =0,r;
+    ssize_t r,bufsiz;
     struct stat sb;
     char * stat = malloc(MAX_LENGTH*sizeof(char));
     char * exe = malloc(MAX_LENGTH*sizeof(char));
@@ -52,20 +51,21 @@ void pid_data(char * pid)
     }
     else 
     {
-        linkname = malloc(sb.st_size + 1);
+        bufsiz = sb.st_size + 1;
+        if (sb.st_size == 0)
+            bufsiz = MAX_LENGTH;
+        linkname = malloc(bufsize);
         if (linkname == NULL) {
             fprintf(stderr, "insufficient memory\n");
             exit(EXIT_FAILURE);
         }
 
-        r = readlink(exe, linkname, sb.st_size + 1);
+        r = readlink(exe, linkname,bufsiz);
 
         if (r < 0) {
             perror("lstat");
             exit(EXIT_FAILURE);
         }
-        //printf("%d\n",r); //always prints nothing not a.out
-        linkname[r] = '\0';
         printf("Executable: %s\n", linkname);
         free(linkname);
     }

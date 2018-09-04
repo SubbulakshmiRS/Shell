@@ -1,11 +1,14 @@
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
+#include <time.h>
 
-#define MAX_LENGTH 1024
+#include "main.h"
 
 //for ls -l , all info is got from stat
 void stat_file(char * path)
@@ -21,7 +24,7 @@ void stat_file(char * path)
 
     if(stat(alt,&fileStat) < 0)    
     {
-        printf("stat error for file:%s\n",path);
+        printf("stat error for file: %s\n",path);
         return ;
     }
 

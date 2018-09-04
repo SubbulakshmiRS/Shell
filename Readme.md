@@ -10,6 +10,10 @@ Compile and Run :
 > 
 > ./a.out
 
+Clean the files :
+> make clean
+
+
 ## *Commands*
 The commands which have been implemented are from scratch are :
 > **cd** 
@@ -38,9 +42,15 @@ Personal commands have also been implemented :
 
 
 ## *Files*
+Makefile
+> For creating the object files and executables . Also for deleting unneccessary files by make clean .
+
+main.h
+>Header file containing all function declarations and global variables .
+
 shell.c
 >The main file containing all the inputs 
->
+
 args.c
 >Contains all functions for the taking inputs and turning into tokens.
 
@@ -55,3 +65,8 @@ stat_ls.c
 
 time_file.c
 >Contains the functions for getting the system local time .
+
+pinfo_data.c
+>For a given pid , all information from the system files are given about the process .By default the pid is that of the base parent process (shell).
+
+

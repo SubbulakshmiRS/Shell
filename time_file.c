@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "main.h"
+
 char * get_time()
 {
     time_t current_time;

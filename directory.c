@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <dirent.h>
 
-#define MAX_LENGTH 1024
+#include "main.h"
 
 //for ls and we have to find how back we have to go to home
 void find_how_back(char * h_str,char * c_str)

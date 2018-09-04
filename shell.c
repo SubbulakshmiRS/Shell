@@ -9,34 +9,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#include "commands.c" //for different inbuilt commands
-#include "args.c" // for accepting inputs 
-#include "time_file.c" //for pinfo
-
-#define MAX_LENGTH 1024
-#define NUM 50
-#define DELIM " \t\r\n\a"
-
-char * line ;
-char ** tokens;
-char ** list;
-int * listsize;
-char cwd[MAX_LENGTH],hostname[MAX_LENGTH];
-char * user ;
-char home[MAX_LENGTH];
-char cur_rel[MAX_LENGTH];
-char shell_pid[MAX_LENGTH];
-
-struct process 
-{
-    int pid;
-    char * name ;
-    int stat;
-    char * statement;
-}; //for different background processes
-
-struct process PROC[MAX_LENGTH];
-int p_len ;
+#include "main.h"
 
 //for ctrl+C
 void sighandler(int signum) {
@@ -155,7 +128,7 @@ int main()
         else if (strcmp(tokens[0],"remindme") == 0)
         {
             int pid = fork();
-            char * statement ;
+            char * statement;
             strcpy(statement,tokens[2]);
             if (pid == 0) 
             {

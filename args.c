@@ -3,11 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MAX_LENGTH 1024
-#define NUM 50
-#define DELIM " \t\r\n\a"
-
-int tokens_len,bufsize;
+#include "main.h"
 
 //take in the input 
 char * get_line()

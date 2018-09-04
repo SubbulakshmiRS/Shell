@@ -3,19 +3,17 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "stat_ls.c" //for ls -l 
-#include "pinfo_data.c" // for pinfo 
-#include "directory.c" //for cd 
-
-#define MAX_LENGTH 1024
+#include "main.h"
 
 void command_cd(char ** tokens,int tokens_len,char cwd[MAX_LENGTH],char home[MAX_LENGTH])
 {
     if( tokens_len == 1)
         find_how_back(home,cwd);               
     else if (tokens_len == 2)
-        if (chdir(tokens[1]) < 0)
+        {
+            if (chdir(tokens[1]) < 0)
             printf(" %s directory not changed\n",tokens[1]);
+        }
     else if (tokens_len > 2)
         printf("more number of arguments than needed %d\n",tokens_len);
 }
@@ -46,20 +44,11 @@ char** command_ls(char ** tokens,int tokens_len,int * lsize)
 {
     int x =0 ;
     int * listsize = &x;
-
     char ** list;
+
     if (tokens[1] == NULL)
         list=list_out_ls(".",listsize);
-    else if ((!strcmp(tokens[1],"-a") && !strcmp(tokens[2],"-l")) || (!strcmp(tokens[1],"-l") && !strcmp(tokens[2],"-a")))
-    {
-        char * cur = (tokens[3] != NULL)?tokens[3]:(".");
-        list = list_all(cur,listsize);
-        for(int i = 0;i<(*listsize);i++)
-        {
-            stat_file(list[i]);
-        } 
-    }
-    else if (strcmp(tokens[1],"-l") == 0)
+    else if (strcmp(tokens[1],"-l") == 0 && (tokens[2] == NULL || strcmp(tokens[2],"-a")!=0))
     {
         char * cur = (tokens[2] != NULL)?tokens[2]:(".");
         list = list_all(cur,listsize);
@@ -68,15 +57,14 @@ char** command_ls(char ** tokens,int tokens_len,int * lsize)
             if (list[i] != NULL && list[i][0] != '.')
             {
                 stat_file(list[i]);
-            } 
+            }
     }
-    else if (strcmp(tokens[1],"-a") == 0)
+    else if (strcmp(tokens[1],"-a") == 0  && (tokens[2] == NULL || strcmp(tokens[2],"-a")!=0))
     {
         char * cur = (tokens[2] != NULL)?tokens[2]:(".");
         list = list_all(cur,listsize);
         for(int i = 0;i<(*listsize);i++)
             printf("%s  ",list[i]);
-        printf("\n");
     }
     else if (strcmp(tokens[1],"-al") == 0 || strcmp(tokens[1],"-la") == 0)
     {
@@ -87,12 +75,20 @@ char** command_ls(char ** tokens,int tokens_len,int * lsize)
             stat_file(list[i]);
         }                
     }
+    else if ((strcmp(tokens[1],"-a") == 0 && strcmp(tokens[2],"-l")== 0) || (strcmp(tokens[1],"-l")==0 && strcmp(tokens[2],"-a")==0))
+    {
+        char * cur = (tokens[3] != NULL)?tokens[3]:(".");
+        list = list_all(cur,listsize);
+        for(int i = 0;i<(*listsize);i++)
+        {
+            stat_file(list[i]);
+        } 
+    }
     else
     {
         char * cur = (tokens[1] != NULL)?tokens[1]:(".");
         list= list_out_ls(cur,listsize);                
     }
-
     lsize = (listsize);
     return list;
 }
