@@ -5,6 +5,9 @@
 #define NUM 50
 #define DELIM " \t\r\n\a"
 
+int Stdout,Stdin;
+int redirect,pipeline;
+int redirect_file;
 char * line ;
 char ** tokens;
 char ** list;

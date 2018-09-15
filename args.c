@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "main.h"
 
@@ -28,7 +29,35 @@ char * get_line()
             buffer[position] = '\0';
             return buffer;
         } 
-        else 
+        else if (c == '<')
+        {
+            redirect = 1;
+            char f[20] ;
+            scanf("%s",f);
+            int file = open(f, O_RDONLY | O_CREAT); 
+            if(file < 0)
+            {
+                printf("unable to open file %s\n",f);
+                exit(1);
+            }
+            dup2(file,0);
+            redirect_file = file;
+        }
+        else if (c == '>')
+        {
+            redirect = 2;
+            char f[20] ;
+            scanf("%s",f);
+            int file = open(f, O_WRONLY| O_APPEND| O_CREAT);        
+            if(file < 0)
+            {
+                printf("unable to open file %s\n",f);
+                exit(1);
+            }
+            redirect_file = file;
+            dup2(file,1);
+        }
+        else
             buffer[position] = c;
         position++;
 

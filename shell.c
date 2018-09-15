@@ -101,6 +101,9 @@ int main()
     user = getenv("USER");
     getcwd(home,sizeof(home));
     sprintf(shell_pid, "%d", getpid());
+    Stdout = dup(1);
+    Stdin = dup(0);
+
 
     while (1)
     {
@@ -109,7 +112,6 @@ int main()
         prompt();
         line = get_line();
         tokens = get_tokens(line);
-
         if (strcmp(tokens[0],"cd") == 0)
             command_cd(tokens,tokens_len,cwd,home);
         else if (strcmp(tokens[0],"pwd") == 0)
@@ -195,6 +197,15 @@ int main()
                 if (x != 1)
                     waitpid(pid, &status, 0);
             }
+        }
+
+        if (redirect != 0)
+        {
+            close(redirect_file);
+            dup2(Stdout,1);
+            dup2(Stdin,0);
+            redirect = 0;
+            redirect_file = 0;
         }
     }
 
