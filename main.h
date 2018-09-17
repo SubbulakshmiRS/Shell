@@ -5,10 +5,13 @@
 #define NUM 50
 #define DELIM " \t\r\n\a"
 
+int cur,r;
 int Stdout,Stdin;
-int redirect,pipeline;
+int redirect,pipeline,pend,pcur;
 int redirect_file;
+int pipe_file[10][2]; //assumption only 10 pipes will be needed
 char * line ;
+char * command ;
 char ** tokens;
 char ** list;
 int * listsize;
@@ -37,6 +40,7 @@ int tokens_len,bufsize;
 //void print_background();
 char ** get_tokens(char * input);
 char * get_line();
+char * evaluate();
 void command_cd(char ** tokens,int tokens_len,char cwd[MAX_LENGTH],char home[MAX_LENGTH]);
 void command_pwd(char ** tokens,int tokens_len,char cwd[MAX_LENGTH]);
 void command_echo(char ** tokens,int tokens_len);
