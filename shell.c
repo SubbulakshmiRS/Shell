@@ -142,8 +142,12 @@ int main()
         {
             if (getpid() == atoi(shell_pid))
                 command_unsetenv(tokens,tokens_len);
-        }   
-        else if (strcmp(tokens[0],"exit()") == 0)
+        }
+        else if (strcmp(tokens[0],"kjobs") == 0)
+            command_kjobs(tokens,tokens_len);
+        else if (strcmp(tokens[0],"overkill") == 0)
+            command_kill();            
+        else if (strcmp(tokens[0],"exit()") == 0 || strcmp(tokens[0],"quit") == 0 )
         {
             printf("\nBYE!\n");
             return 0;
@@ -151,8 +155,6 @@ int main()
         else if (strcmp(tokens[0],"remindme") == 0)
         {
             int pid = fork();
-            char * statement;
-            strcpy(statement,tokens[2]);
             if (pid == 0) 
             {
                 // Child process
@@ -172,7 +174,7 @@ int main()
             else 
             {
                 // Parent process
-                store("remindme",pid,1,statement);
+                store("remindme",pid,1,(tokens[2]?tokens[2]:""));
             }
            
         }

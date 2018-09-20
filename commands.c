@@ -3,8 +3,32 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #include "main.h"
+
+void command_kill()
+{
+    for(int i =0 ;i<p_len;i++)
+        kill(PROC[i].pid,9);
+}
+
+void command_kjobs(char ** tokens , int tokens_len)
+{
+    if ( tokens_len == 1 || tokens_len > 3)
+    {
+        printf("error: incorrect number of arguments\n");
+        return ;
+    }
+    int no = atoi(tokens[1]) - 1;
+    int sig = atoi(tokens[2]);
+    if (no >= p_len)
+    {
+        printf("unavailable job number\n");
+        return ;
+    }
+    kill(PROC[no].pid,sig);    
+}
 
 void command_setenv(char ** tokens,int tokens_len)
 {

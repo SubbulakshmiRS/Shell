@@ -42,6 +42,8 @@ int tokens_len,bufsize;
 char ** get_tokens(char * input);
 char * get_line();
 char * evaluate();
+void command_kill();
+void command_kjobs(char ** tokens , int tokens_len);
 void command_jobs();
 void command_setenv(char ** tokens,int tokens_len);
 void command_unsetenv(char ** tokens,int tokens_len);
