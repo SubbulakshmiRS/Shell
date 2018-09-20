@@ -43,6 +43,8 @@ char ** get_tokens(char * input);
 char * get_line();
 char * evaluate();
 void command_jobs();
+void command_setenv(char ** tokens,int tokens_len);
+void command_unsetenv(char ** tokens,int tokens_len);
 void command_cd(char ** tokens,int tokens_len,char cwd[MAX_LENGTH],char home[MAX_LENGTH]);
 void command_pwd(char ** tokens,int tokens_len,char cwd[MAX_LENGTH]);
 void command_echo(char ** tokens,int tokens_len);

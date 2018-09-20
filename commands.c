@@ -2,8 +2,31 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "main.h"
+
+void command_setenv(char ** tokens,int tokens_len)
+{
+    if ( tokens_len == 1 || tokens_len > 3)
+    {
+        printf("error: incorrect number of arguments\n");
+        return ;
+    }
+    if (setenv(tokens[1],tokens[2], 1) < 0)
+        perror("setenv");
+}
+
+void command_unsetenv(char ** tokens,int tokens_len)
+{
+    if ( tokens_len == 1 || tokens_len > 2)
+    {
+        printf("error: incorrect number of arguments\n");
+        return ;
+    }
+    if (unsetenv(tokens[1]) < 0)
+        perror("unsetenv");    
+}
 
 void command_jobs()
 {

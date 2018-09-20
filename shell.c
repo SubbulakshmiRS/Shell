@@ -132,7 +132,17 @@ int main()
         else if (strcmp(tokens[0],"pinfo") == 0)
             command_pinfo(shell_pid,tokens,tokens_len);
         else if (strcmp(tokens[0],"jobs") == 0)
-            command_jobs();       
+            command_jobs();    
+        else if (strcmp(tokens[0],"setenv") == 0)
+        {
+            if (getpid() == atoi(shell_pid))
+                command_setenv(tokens,tokens_len);
+        }
+        else if (strcmp(tokens[0],"unsetenv") == 0)
+        {
+            if (getpid() == atoi(shell_pid))
+                command_unsetenv(tokens,tokens_len);
+        }   
         else if (strcmp(tokens[0],"exit()") == 0)
         {
             printf("\nBYE!\n");
