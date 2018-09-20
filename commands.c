@@ -5,6 +5,13 @@
 
 #include "main.h"
 
+void command_jobs()
+{
+    printf("dfbv %d\n",p_len);
+    for(int i = 0;i<p_len;i++)
+        printf("[%d] %s %s[%d]\n",i+1,PROC[i].stat?"Stopped":"Running",PROC[i].name,PROC[i].pid);
+}
+
 void command_cd(char ** tokens,int tokens_len,char cwd[MAX_LENGTH],char home[MAX_LENGTH])
 {
     if( tokens_len == 1)

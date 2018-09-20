@@ -5,6 +5,7 @@
 #define NUM 50
 #define DELIM " \t\r\n\a"
 
+int abcd ;
 int cur,r;
 int Stdout,Stdin;
 int redirect,pipeline,pend,pcur;
@@ -41,6 +42,7 @@ int tokens_len,bufsize;
 char ** get_tokens(char * input);
 char * get_line();
 char * evaluate();
+void command_jobs();
 void command_cd(char ** tokens,int tokens_len,char cwd[MAX_LENGTH],char home[MAX_LENGTH]);
 void command_pwd(char ** tokens,int tokens_len,char cwd[MAX_LENGTH]);
 void command_echo(char ** tokens,int tokens_len);

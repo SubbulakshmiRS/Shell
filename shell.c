@@ -104,17 +104,14 @@ int main()
     Stdout = dup(1);
     Stdin = dup(0);
 
-
     while (1)
     {
         signal(SIGINT, sighandler);
         print_background();
         if (pipeline == 0)
-            prompt();
+                prompt();
         line = get_line();
-        printf("bjhb\n");
         command = evaluate();
-        printf("dbh\n");
 
         if(strlen(command) == 0)
         {
@@ -123,7 +120,6 @@ int main()
         }
 
         tokens = get_tokens(command);
-
 
         if (strcmp(tokens[0],"cd") == 0)
             command_cd(tokens,tokens_len,cwd,home);
@@ -135,6 +131,8 @@ int main()
             list = command_ls(tokens,tokens_len,listsize);
         else if (strcmp(tokens[0],"pinfo") == 0)
             command_pinfo(shell_pid,tokens,tokens_len);
+        else if (strcmp(tokens[0],"jobs") == 0)
+            command_jobs();       
         else if (strcmp(tokens[0],"exit()") == 0)
         {
             printf("\nBYE!\n");
@@ -221,7 +219,7 @@ int main()
             redirect_file = 0;
         }
 
-        if (pend != 0)
+        if ( pend != 0)
         {
             for(int i = 0;i<pipeline;i++)
             {
@@ -230,18 +228,9 @@ int main()
             }
             pipeline = 0;
             pend = 0;
+            pcur = 0;
             dup2(Stdout,1);
-            dup2(Stdin,0);
-            r = 0;
-        }
-
-        if (pcur == pipeline && pcur > 0)
-        {
-            printf("dfjvd\n");
-            dup2(pipe_file[pipeline-1][0],0);
-            dup2(Stdout,1);
-            printf("fjbvkkf\n");
-            pend = 1;
+            dup2(Stdin,0);  
         }
     }
 

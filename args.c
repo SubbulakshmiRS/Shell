@@ -3,19 +3,21 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #include "main.h"
 
-//take in the input 
+//take in the input
 char * get_line()
 {
     if (r != 0)
     {
-        printf("KCBJSDF\n");
         return line;
     }
     
     cur = 0;
+    pipeline = 0 ;
+    pcur = 0;
     char * buffer = malloc(sizeof(char)*MAX_LENGTH);
     int c,position =0;
     bufsize = MAX_LENGTH;
@@ -42,7 +44,7 @@ char * get_line()
             if (c == '|')
                 pipeline++ ;
             buffer[position] = c;
-        } 
+        }
         position++;
 
         // If we have exceeded the buffer, reallocate.
@@ -59,12 +61,13 @@ char * get_line()
     }
 }
 
-//evaluate the command and break it to meaningful pieces for piping and such.
+
+//evaluate the command and break it to meaningful pieces for piping and redirection.
 char * evaluate()
 {
-    printf("dnvkj %d\n",cur);
     char * buffer = malloc(sizeof(char)*MAX_LENGTH);
     int c,position = 0;
+    int x = 0;
     bufsize = MAX_LENGTH;
 
     if (!buffer)
@@ -75,58 +78,96 @@ char * evaluate()
 
     while (1) 
     {
+
+        if (x == 0 && pcur == pipeline && pcur > 0)
+        {
+            x = 1;
+            dup2(pipe_file[pcur-1][0],0);
+            dup2(Stdout,1);
+            close(pipe_file[pcur-1][1]); 
+            pend  = 1;  
+        }
+
         c = line[cur];
-        //printf("char %c\n",c);
 
         // If we hit EOF, replace it with a null character and return.
-        if (c == EOF || c == '\n')
+        if (c == EOF || c == '\n' || c == '\0')
         {
             buffer[position] = '\0';
+            pend = 1;
             r = 0;
             cur = 0;
             return buffer;
-        } 
-        else if (c == '<')
-        {
-            redirect = 1;
-            char f[20] ;
-            scanf("%s",f);
-            int file = open(f, O_RDONLY | O_CREAT); 
-            if(file < 0)
-            {
-                printf("unable to open file %s\n",f);
-                exit(1);
-            }
-            dup2(file,0);
-            redirect_file = file;
         }
-        else if (c == '>')
+        else if (c == '<' || c == '>')
         {
-            redirect = 2;
-            char f[20] ;
-            scanf("%s",f);
-            int file = open(f, O_WRONLY| O_APPEND| O_CREAT);        
-            if(file < 0)
+            int c_direct = c;
+            char f[20];
+            int file = 0;
+            redirect = 1;
+
+            if (c == '>' && line[cur+1] == '>')
             {
-                printf("unable to open file %s\n",f);
-                exit(1);
+                cur++;
+                c_direct = '?'; // random symbol to represent >>
+            }
+
+            do{
+                cur++;
+                c = line[cur];
+            }while(c == ' ');
+
+            int i = 0;
+            while(isalnum(c))
+            {
+                f[i++] = c;
+                cur++;
+                c = line[cur];
+            }
+            f[i] = '\0';
+
+            if (c_direct == '<')
+            {
+                file = open(f, O_RDONLY | O_CREAT); 
+                if(file < 0)
+                {
+                    printf("unable to open file %s\n",f);
+                    exit(1);
+                }
+                dup2(file,0);
+            }
+            else if (c_direct == '?')
+            {
+                file = open(f,  O_WRONLY | O_CREAT | O_APPEND, 0644);        
+                if(file < 0)
+                {
+                    printf("unable to open file %s\n",f);
+                    exit(1);
+                }
+                dup2(file,1);               
+            }
+            else 
+            {
+                file = open(f,  O_WRONLY | O_CREAT | O_TRUNC, 0644);        
+                if(file < 0)
+                {
+                    printf("unable to open file %s\n",f);
+                    exit(1);
+                }
+                dup2(file,1);
             }
             redirect_file = file;
-            dup2(file,1);
         }
         else if(c == '|')
         {
-            printf("%d\n",cur);
             pcur++;
             if (pipe(pipe_file[pcur-1]) != 0) {
                 perror("bad pipe");
                 exit(1);
             }
-            printf("dfj\n");
             if (pcur == 1)
             {
                 dup2(pipe_file[0][1],1);
-                close(pipe_file[0][0]);
                 close(pipe_file[0][1]);
             }
             else
@@ -134,7 +175,6 @@ char * evaluate()
                 dup2(pipe_file[pcur - 2][0],0);
                 dup2(pipe_file[pcur - 1][1],1);
             }
-            //printf("bcjds\n");
             cur++ ;
             return buffer ;
         }
@@ -156,7 +196,6 @@ char * evaluate()
                 exit(1);
             }
         }
-        //printf("%d %d %c\n",position,cur,line[cur]);
     }
 } 
 
