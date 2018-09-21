@@ -222,6 +222,7 @@ int main()
             }
         }
 
+        //end of redirections 
         if (redirect != 0)
         {
             close(redirect_file);
@@ -231,6 +232,7 @@ int main()
             redirect_file = 0;
         }
 
+        //end of pipings
         if ( pend != 0)
         {
             for(int i = 0;i<pipeline;i++)
