@@ -19,16 +19,18 @@ void sighandler_c(int signum) {
                     kill(current_pid,SIGKILL);
                 return ;
             }
-        kill(current_pid,SIGKILL); 
+        kill(current_pid,SIGKILL);
+        current_pid = current_ppid = 0; 
     }
 } 
 
 //for Ctrl+Z
 void sighandler_z(int signum) {
-    if(current_pid != atoi(shell_pid))
+    if(current_pid != atoi(shell_pid) && current_pid != 0)
     {
         store_pid(current_pid,current_ppid);
         kill(current_pid,SIGSTOP);
+        current_pid = current_ppid = 0; 
     }
 }
 

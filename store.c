@@ -24,7 +24,7 @@ void store_pid(int pid,int ppid)
 {
     char * stat = malloc(MAX_LENGTH*sizeof(char));
     char line[MAX_LENGTH];
-    char * p ;
+    char p[MAX_LENGTH] ;
 
     sprintf(p, "%d", pid);
     strcpy(stat,"/proc/");

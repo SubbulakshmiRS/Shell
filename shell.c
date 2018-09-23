@@ -50,7 +50,7 @@ int main()
         signal(SIGTSTP,sighandler_z);
         signal(SIGCHLD,sighandler_ch);        
         print_background();
-        if (pipeline == 0)
+        if (pipeline == 0 && semi_end == 0)
                 prompt();
         line = get_line();
         command = evaluate();
@@ -165,12 +165,19 @@ int main()
                 current_pid = pid;
                 current_ppid = getppid();
                 setpgid(pid, pid);
-                int status;
+                //int status;
                 store(tokens[0],cpid,x,NULL,getpid());
                 if (x != 1)
                     pause();
                     //waitpid(cpid, &status, 0);
             }
+        }
+
+        //end of semicolon 
+        if (semi_end != 0)
+        {
+            dup2(Stdout,1);
+            dup2(Stdin,0);           
         }
 
         //end of redirections 
@@ -184,7 +191,7 @@ int main()
         }
 
         //end of pipings
-        if ( pend != 0)
+        if (pend != 0)
         {
             for(int i = 0;i<pipeline;i++)
             {

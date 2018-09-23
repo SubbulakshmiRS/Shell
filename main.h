@@ -8,7 +8,7 @@
 int current_pid,current_ppid;
 int cur,r;
 int Stdout,Stdin;
-int redirect,pipeline,pend,pcur;
+int redirect,pipeline,pend,pcur,semi_end;
 int redirect_file;
 int pipe_file[10][2]; //assumption only 10 pipes will be needed
 char * line ;

@@ -98,6 +98,7 @@ char * evaluate()
             pend = 1;
             r = 0;
             cur = 0;
+            semi_end = 0;
             return buffer;
         }
         else if (c == '<' || c == '>')
@@ -177,6 +178,12 @@ char * evaluate()
                 dup2(pipe_file[pcur - 1][1],1);
             }
             cur++ ;
+            return buffer ;
+        }
+        else if(c==';')
+        {
+            cur++;
+            semi_end = 1;
             return buffer ;
         }
         else
