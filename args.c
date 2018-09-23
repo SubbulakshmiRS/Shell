@@ -63,6 +63,7 @@ char * get_line()
 
 
 //evaluate the command and break it to meaningful pieces for piping and redirection.
+//evaluate for semicolon separated commands
 char * evaluate()
 {
     char * buffer = malloc(sizeof(char)*MAX_LENGTH);

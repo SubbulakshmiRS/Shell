@@ -4,8 +4,37 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 #include "main.h"
+
+
+void command_fg(char ** tokens ,int tokens_len)
+{
+    if ( tokens_len == 1 || tokens_len > 2)
+    {
+        printf("error: incorrect number of arguments\n");
+        return ;
+    }
+    int status ;
+    int n = atoi(tokens[1]) - 1;
+    PROC[n].stat = -1;
+    if(getpid() == PROC[n].ppid )
+        waitpid(PROC[n].pid, &status, 0);
+    
+}
+
+void command_bg(char ** tokens ,int tokens_len)
+{
+    if ( tokens_len == 1 || tokens_len > 2)
+    {
+        printf("error: incorrect number of arguments\n");
+        return ;
+    } 
+    int n = atoi(tokens[1]) - 1;
+    PROC[n].stat = 0; 
+    kill(PROC[n].pid,18);   
+}
 
 void command_kill()
 {
@@ -54,9 +83,18 @@ void command_unsetenv(char ** tokens,int tokens_len)
 
 void command_jobs()
 {
-    printf("dfbv %d\n",p_len);
+    char t[20];
     for(int i = 0;i<p_len;i++)
-        printf("[%d] %s %s[%d]\n",i+1,PROC[i].stat?"Stopped":"Running",PROC[i].name,PROC[i].pid);
+    {
+        if( PROC[i].stat != -1)
+        {
+            if( PROC[i].stat == 1)
+                strcpy(t,"Stopped");
+            else if (PROC[i].stat == 0)
+                strcpy(t,"Running");
+            printf("[%d] %s %s[%d]\n",i+1,t,PROC[i].name,PROC[i].pid);
+        }
+    }
 }
 
 void command_cd(char ** tokens,int tokens_len,char cwd[MAX_LENGTH],char home[MAX_LENGTH])

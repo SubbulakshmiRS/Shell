@@ -1,9 +1,10 @@
 CC = gcc
 CFLAGS = -Wall -c
-OBJ = shell.o pinfo_data.o stat_ls.o directory.o args.o time_file.o commands.o
+OBJ1 = shell.o pinfo_data.o stat_ls.o directory.o args.o time_file.o commands.o 
+OBJ2 = signal_handle.o bg_check.o
 
-a.out: $(OBJ)
-	$(CC) $(OBJ)
+a.out: $(OBJ1) $(OBJ2)
+	$(CC) $(OBJ1) $(OBJ2)
 
 $@: shell.c
 	$(CC) $(CFLAGS) $<
@@ -25,6 +26,12 @@ $@: args.c
 
 $@: time_file.c
 	$(CC) $(CFLAGS) $<	
+
+$@: signal_handle.c
+	$(CC) $(CFLAGS) $<	
+
+$@: bg_check.c
+	$(CC) $(CFLAGS) $<			
 
 clean:
 	rm -f *.o a.out

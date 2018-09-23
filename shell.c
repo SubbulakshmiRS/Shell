@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <time.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -11,11 +12,43 @@
 
 #include "main.h"
 
-//for ctrl+C
-void sighandler(int signum) {
-    if (getpid() != atoi(shell_pid))
-        kill(getpid(),SIGHUP);
-} 
+//store info about each background process called 
+void store(char * name,int pid,int x, char * statement,int ppid)
+{
+    if(x != 0)
+    {
+        PROC[p_len].pid = pid;
+        PROC[p_len].name = name;
+        PROC[p_len].statement = statement;
+        PROC[p_len].ppid = ppid;
+        p_len++;
+    }
+
+}
+
+void store_pid(int pid,int ppid)
+{
+    char * stat = malloc(MAX_LENGTH*sizeof(char));
+    char line[MAX_LENGTH];
+    char * p = "";
+
+    sprintf(p, "%d", pid);
+    strcpy(stat,"/proc/");
+    strcat(stat,p);
+    strcat(stat,"/comm");  
+	FILE * fd_input1 = fopen(stat,"r");
+	if(fd_input1 == NULL)
+	{
+		fprintf(stderr, "Failed to open file \n");
+        return ;
+	}
+    fscanf(fd_input1, " %1023s", line);
+	fclose(fd_input1);
+    free(stat);
+    store(line,pid,1,NULL,ppid);
+    return ;
+}
+
 
 void prompt()
 {
@@ -37,61 +70,6 @@ void prompt()
     return ;
 }
 
-//store info about each background process called 
-void store(char * name,int pid,int x, char * statement)
-{
-    if(x != 0)
-    {
-        PROC[p_len].pid = pid;
-        PROC[p_len].name = name;
-        PROC[p_len].statement = statement;
-        p_len++;
-    }
-
-}
-
-// check whether the process is a background one
-int check_background()
-{
-    int background = 0;
-    for(int i=0;i<tokens_len;i++)
-        if (strcmp(tokens[i],"&") == 0)   
-            {
-                background = 1;
-                tokens[i] = NULL;
-                tokens_len--;
-            }
-    return background;
-}
-
-//print for all background process which have ended smoothly
-void print_background()
-{
-    int s,pid;
-    while ( (pid = waitpid(-1, &s, WNOHANG)) > 0)
-        for(int i=0;i<p_len;i++)
-        {
-            if (PROC[i].pid == pid)
-            {
-                if (WIFEXITED(s))
-                {
-                    if (strcmp(PROC[i].name,"remindme") == 0)
-                        printf("Reminder: %s\n",PROC[i].statement);
-                    printf("%s with pid: %d exited normally\n",PROC[i].name,PROC[i].pid);
-                }
-                else if (WIFSIGNALED(s))
-                    printf("%s with pid: %d killed by signal\n",PROC[i].name,PROC[i].pid);
-                else if (WIFSTOPPED(s)) 
-                    printf("%s with pid: %d stopped by signal\n",PROC[i].name,PROC[i].pid);  
-                else 
-                    printf("%s with pid: %d ended due to unknown reasons\n",PROC[i].name,PROC[i].pid);             
-                PROC[i].stat = 1;  
-                break; 
-            }
-        }
-    
-    return ;
-}
 
 int main() 
 {
@@ -106,7 +84,8 @@ int main()
 
     while (1)
     {
-        signal(SIGINT, sighandler);
+        signal(SIGINT, sighandler_c);
+        signal(SIGTSTP,sighandler_z);
         print_background();
         if (pipeline == 0)
                 prompt();
@@ -132,7 +111,11 @@ int main()
         else if (strcmp(tokens[0],"pinfo") == 0)
             command_pinfo(shell_pid,tokens,tokens_len);
         else if (strcmp(tokens[0],"jobs") == 0)
-            command_jobs();    
+            command_jobs();  
+        else if (strcmp(tokens[0],"fg") == 0)
+            command_fg(tokens,tokens_len); 
+        else if (strcmp(tokens[0],"bg") == 0)
+            command_bg(tokens,tokens_len);   
         else if (strcmp(tokens[0],"setenv") == 0)
         {
             if (getpid() == atoi(shell_pid))
@@ -174,7 +157,7 @@ int main()
             else 
             {
                 // Parent process
-                store("remindme",pid,1,(tokens[2]?tokens[2]:""));
+                store("remindme",pid,1,(tokens[2]?tokens[2]:""),getpid());
             }
            
         }
@@ -215,10 +198,13 @@ int main()
             else 
             {
                 // Parent process
+                int cpid = pid;
+                current_pid = pid;
+                setpgid(pid, pid);
                 int status;
-                store(tokens[0],pid,x,NULL);
+                store(tokens[0],cpid,x,NULL,getpid());
                 if (x != 1)
-                    waitpid(pid, &status, 0);
+                    waitpid(cpid, &status, 0);
             }
         }
 

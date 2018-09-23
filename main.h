@@ -5,7 +5,7 @@
 #define NUM 50
 #define DELIM " \t\r\n\a"
 
-int abcd ;
+int current_pid;
 int cur,r;
 int Stdout,Stdin;
 int redirect,pipeline,pend,pcur;
@@ -28,20 +28,25 @@ struct process
     char * name ;
     int stat;
     char * statement;
+    int ppid;
 }; //for different background processes
 
 struct process PROC[MAX_LENGTH];
 int p_len ;
 int tokens_len,bufsize;
 
-//void prompt();
-//void sighandler(int);
-//void store(char *,int,int , char *);
-//int check_background();
-//void print_background();
+void prompt();
+void sighandler_c(int signum);
+void sighandler_z(int signum);
+void store(char * name,int pid,int x, char * statement,int ppid);
+void store_pid(int pid,int ppid);
+int check_background();
+void print_background();
 char ** get_tokens(char * input);
 char * get_line();
 char * evaluate();
+void command_fg(char ** tokens ,int tokens_len);
+void command_bg(char ** tokens ,int tokens_len);
 void command_kill();
 void command_kjobs(char ** tokens , int tokens_len);
 void command_jobs();
