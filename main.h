@@ -5,7 +5,7 @@
 #define NUM 50
 #define DELIM " \t\r\n\a"
 
-int current_pid;
+int current_pid,current_ppid;
 int cur,r;
 int Stdout,Stdin;
 int redirect,pipeline,pend,pcur;
@@ -38,6 +38,7 @@ int tokens_len,bufsize;
 void prompt();
 void sighandler_c(int signum);
 void sighandler_z(int signum);
+void sighandler_ch(int signum);
 void store(char * name,int pid,int x, char * statement,int ppid);
 void store_pid(int pid,int ppid);
 int check_background();

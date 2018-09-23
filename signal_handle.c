@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "main.h"
 
@@ -24,12 +25,14 @@ void sighandler_c(int signum) {
 
 //for Ctrl+Z
 void sighandler_z(int signum) {
-    int n = getpid();
-    int ppid = getppid();
-
-    if(n != atoi(shell_pid))
+    if(current_pid != atoi(shell_pid))
     {
-        store_pid(n,ppid);
-        kill(n,SIGSTOP);
+        store_pid(current_pid,current_ppid);
+        kill(current_pid,SIGSTOP);
     }
+}
+
+void sighandler_ch(int signum){
+    int status;
+    waitpid(-1, &status, WNOHANG);
 }

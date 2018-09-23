@@ -12,44 +12,6 @@
 
 #include "main.h"
 
-//store info about each background process called 
-void store(char * name,int pid,int x, char * statement,int ppid)
-{
-    if(x != 0)
-    {
-        PROC[p_len].pid = pid;
-        PROC[p_len].name = name;
-        PROC[p_len].statement = statement;
-        PROC[p_len].ppid = ppid;
-        p_len++;
-    }
-
-}
-
-void store_pid(int pid,int ppid)
-{
-    char * stat = malloc(MAX_LENGTH*sizeof(char));
-    char line[MAX_LENGTH];
-    char * p = "";
-
-    sprintf(p, "%d", pid);
-    strcpy(stat,"/proc/");
-    strcat(stat,p);
-    strcat(stat,"/comm");  
-	FILE * fd_input1 = fopen(stat,"r");
-	if(fd_input1 == NULL)
-	{
-		fprintf(stderr, "Failed to open file \n");
-        return ;
-	}
-    fscanf(fd_input1, " %1023s", line);
-	fclose(fd_input1);
-    free(stat);
-    store(line,pid,1,NULL,ppid);
-    return ;
-}
-
-
 void prompt()
 {
     int i;
@@ -86,6 +48,7 @@ int main()
     {
         signal(SIGINT, sighandler_c);
         signal(SIGTSTP,sighandler_z);
+        signal(SIGCHLD,sighandler_ch);        
         print_background();
         if (pipeline == 0)
                 prompt();
@@ -200,11 +163,13 @@ int main()
                 // Parent process
                 int cpid = pid;
                 current_pid = pid;
+                current_ppid = getppid();
                 setpgid(pid, pid);
                 int status;
                 store(tokens[0],cpid,x,NULL,getpid());
                 if (x != 1)
-                    waitpid(cpid, &status, 0);
+                    pause();
+                    //waitpid(cpid, &status, 0);
             }
         }
 
