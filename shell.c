@@ -48,8 +48,7 @@ int main()
     {
         signal(SIGINT, sighandler_c);
         signal(SIGTSTP,sighandler_z);
-        signal(SIGCHLD,sighandler_ch);        
-        print_background();
+        signal(SIGCHLD,sighandler_ch);
         if (pipeline == 0 && semi_end == 0)
                 prompt();
         line = get_line();

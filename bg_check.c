@@ -35,14 +35,18 @@ void print_background()
                     if (strcmp(PROC[i].name,"remindme") == 0)
                         printf("Reminder: %s\n",PROC[i].statement);
                     printf("%s with pid: %d exited normally\n",PROC[i].name,PROC[i].pid);
+                    PROC[i].stat = 2;
                 }
-                else if (WIFSIGNALED(s))
-                    printf("%s with pid: %d killed by signal\n",PROC[i].name,PROC[i].pid);
-                else if (WIFSTOPPED(s)) 
-                    printf("%s with pid: %d stopped by signal\n",PROC[i].name,PROC[i].pid);  
                 else 
-                    printf("%s with pid: %d ended due to unknown reasons\n",PROC[i].name,PROC[i].pid);             
-                PROC[i].stat = 1;  
+                {
+                    if (WIFSIGNALED(s))
+                        printf("%s with pid: %d killed by signal\n",PROC[i].name,PROC[i].pid);
+                    else if (WIFSTOPPED(s)) 
+                        printf("%s with pid: %d stopped by signal\n",PROC[i].name,PROC[i].pid);  
+                    else 
+                        printf("%s with pid: %d ended due to unknown reasons\n",PROC[i].name,PROC[i].pid);             
+                    PROC[i].stat = 1; 
+                } 
                 break; 
             }
         }

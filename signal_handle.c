@@ -35,6 +35,5 @@ void sighandler_z(int signum) {
 }
 
 void sighandler_ch(int signum){
-    int status;
-    waitpid(-1, &status, WNOHANG);
+    print_background();
 }
