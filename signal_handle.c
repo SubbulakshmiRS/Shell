@@ -29,7 +29,7 @@ void sighandler_z(int signum) {
     if(current_pid != atoi(shell_pid) && current_pid != 0)
     {
         store_pid(current_pid,current_ppid);
-        kill(current_pid,SIGSTOP);
+        kill(current_pid,SIGTSTP);
         current_pid = current_ppid = 0; 
     }
 }
