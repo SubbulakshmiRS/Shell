@@ -88,7 +88,7 @@ int main()
             if (getpid() == atoi(shell_pid))
                 command_unsetenv(tokens,tokens_len);
         }
-        else if (strcmp(tokens[0],"kjobs") == 0)
+        else if (strcmp(tokens[0],"kjob") == 0)
             command_kjobs(tokens,tokens_len);
         else if (strcmp(tokens[0],"overkill") == 0)
             command_kill();            

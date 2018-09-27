@@ -18,10 +18,17 @@ void command_fg(char ** tokens ,int tokens_len)
     }
     int status ;
     int n = atoi(tokens[1]) - 1;
-    PROC[n].stat = -1;
-    if(getpid() == PROC[n].ppid )
-        waitpid(PROC[n].pid, &status, 0);
     
+    if (n >= 0 && n<p_len && (PROC[n].stat == 1 || PROC[n].stat == 0) )
+    {
+        PROC[n].stat = -1;
+        if(getpid() == PROC[n].ppid )
+            waitpid(PROC[n].pid, &status, 0);
+    }
+    else 
+    {
+        printf("error : unavailable process\n");
+    }   
 }
 
 void command_bg(char ** tokens ,int tokens_len)
@@ -32,8 +39,18 @@ void command_bg(char ** tokens ,int tokens_len)
         return ;
     } 
     int n = atoi(tokens[1]) - 1;
-    PROC[n].stat = 0; 
-    kill(PROC[n].pid,18);   
+    if (n >= 0 && n<p_len && (PROC[n].stat == 1 || PROC[n].stat == 0))
+    {
+        if(PROC[n].stat == 1 )
+        {
+            PROC[n].stat = 0; 
+            kill(PROC[n].pid,18);
+        }
+    }
+    else 
+    {
+        printf("error : unavailable process\n");
+    }   
 }
 
 void command_kill()
@@ -51,7 +68,7 @@ void command_kjobs(char ** tokens , int tokens_len)
     }
     int no = atoi(tokens[1]) - 1;
     int sig = atoi(tokens[2]);
-    if (no >= p_len)
+    if (no >= p_len || no < 0)
     {
         printf("unavailable job number\n");
         return ;
@@ -86,8 +103,9 @@ void command_jobs()
     char t[20];
     for(int i = 0;i<p_len;i++)
     {
-        if( PROC[i].stat != -1)
+        if( PROC[i].stat != -1 && PROC[i].stat != 2)
         {
+            strcpy(t,"");
             if( PROC[i].stat == 1)
                 strcpy(t,"Stopped");
             else if (PROC[i].stat == 0)
